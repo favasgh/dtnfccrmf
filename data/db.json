@@ -1,0 +1,169 @@
+{
+  "products": [
+    {
+      "name": "Blank Card",
+      "price": 80,
+      "my_cost": 60,
+      "category": "card",
+      "active": true,
+      "id": "prod_1",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "UV Printing",
+      "price": 100,
+      "my_cost": 60,
+      "category": "service",
+      "active": true,
+      "id": "prod_2",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Manufactured Card",
+      "price": 200,
+      "my_cost": 150,
+      "category": "card",
+      "active": true,
+      "id": "prod_3",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Encoding",
+      "price": 300,
+      "my_cost": 0,
+      "category": "service",
+      "active": true,
+      "id": "prod_4",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Custom Profile",
+      "price": 800,
+      "my_cost": 0,
+      "category": "service",
+      "active": true,
+      "id": "prod_5",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Classic Link",
+      "price": 480,
+      "my_cost": 120,
+      "category": "card",
+      "active": true,
+      "id": "prod_6",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Classic Pro",
+      "price": 980,
+      "my_cost": 120,
+      "category": "card",
+      "active": true,
+      "id": "prod_7",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Signature Link",
+      "price": 500,
+      "my_cost": 150,
+      "category": "card",
+      "active": true,
+      "id": "prod_8",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Signature Pro",
+      "price": 1000,
+      "my_cost": 150,
+      "category": "card",
+      "active": true,
+      "id": "prod_9",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    }
+  ],
+  "leads": [
+    {
+      "id": "lead_1",
+      "user_id": "owner",
+      "name": "Rahul Sharma",
+      "business_name": "Calicut Motors",
+      "business_type": "Automobile",
+      "phone": "+91 9876543210",
+      "source": "instagram",
+      "stage": "Interested",
+      "interested_product": "Signature Pro",
+      "objection": null,
+      "notes": "Interested in NFC cards for showroom staff",
+      "next_follow_up_date": "2026-11-23",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust_1",
+      "user_id": "owner",
+      "name": "Asif Ali",
+      "business_name": "Malabar Roasters",
+      "phone": "+91 8304830149",
+      "email": "asif@malabar.com",
+      "address": "SM Street, Calicut, Kerala",
+      "lead_id": null,
+      "notes": "Premium client",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    }
+  ],
+  "orders": [],
+  "order_items": [],
+  "activities": [
+    {
+      "id": "act_1",
+      "user_id": "owner",
+      "lead_id": "lead_1",
+      "customer_id": null,
+      "type": "note",
+      "text": "Initial contact via Instagram direct message",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    }
+  ],
+  "settings": {
+    "business_name": "Double Tap NFC",
+    "business_phone": "+91 8304830149",
+    "business_email": "hello@doubletapnfc.com",
+    "business_address": "Calicut, Kerala, India",
+    "payment_details": "Bank: State Bank of India\nAccount: 123456789012\nIFSC: SBIN0001234\nUPI ID: 8304830149@upi\nGoogle Pay / PhonePe: +91 8304830149"
+  },
+  "whatsapp_templates": [
+    {
+      "name": "Intro",
+      "template": "Hi {name}, this is Muhammed from Double Tap. We make NFC smart cards: one tap opens your Google reviews, Instagram or a full profile. No yearly fee. I've attached our brochure. Which card suits {business}?",
+      "id": "tpl_1",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Follow-up",
+      "template": "Hi {name}, just checking if you had a chance to look at the Double Tap brochure.",
+      "id": "tpl_2",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    },
+    {
+      "name": "Advance request",
+      "template": "Thanks {name}! To start your order, please pay the advance of ₹{advance}. Work starts after the advance payment.",
+      "id": "tpl_3",
+      "user_id": "owner",
+      "created_at": "2026-11-23T11:40:42.761Z"
+    }
+  ],
+  "order_counter": 0
+}
