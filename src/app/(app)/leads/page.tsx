@@ -351,10 +351,10 @@ export default function LeadsPage() {
                         {lead.next_follow_up_date && (
                           <div
                             className={`mt-2 text-[10px] ${isOverdue(lead.next_follow_up_date)
-                                ? 'text-danger'
-                                : isDueToday(lead.next_follow_up_date)
-                                  ? 'text-warning'
-                                  : 'text-muted'
+                              ? 'text-danger'
+                              : isDueToday(lead.next_follow_up_date)
+                                ? 'text-warning'
+                                : 'text-muted'
                               }`}
                           >
                             Due: {formatDate(lead.next_follow_up_date)}
