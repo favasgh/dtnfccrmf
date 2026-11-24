@@ -117,17 +117,17 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
         <div>
           {/* Top Header */}
           <div className="flex justify-between items-start">
-            {/* Left: Brand & Invoice title */}
+            {/* Left: Brand Logo & Invoice title */}
             <div>
-              <div className="leading-tight">
-                <span className="block text-3xl sm:text-4xl font-extrabold tracking-tight text-black leading-none">
-                  double
-                </span>
-                <span className="block text-3xl sm:text-4xl font-extrabold tracking-tight text-black leading-none mt-1">
-                  tap
-                </span>
+              <div className="w-28 sm:w-36">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/doubletap-logo.png"
+                  alt="double tap"
+                  className="w-full h-auto object-contain"
+                />
               </div>
-              <div className="mt-8 sm:mt-10">
+              <div className="mt-6 sm:mt-8">
                 <h1 className="text-5xl sm:text-6xl font-light tracking-tight text-black">
                   Invoice
                 </h1>
