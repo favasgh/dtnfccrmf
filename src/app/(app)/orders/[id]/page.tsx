@@ -268,6 +268,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             ← Back to Orders
           </Link>
           <div className="flex items-center gap-2">
+            <Link
+              href={`/orders/${id}/edit`}
+              className="px-3 py-1.5 bg-card border border-border text-foreground hover:border-lime/40 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-colors"
+            >
+              <span>✏️</span> Edit Complete Bill
+            </Link>
             <button
               onClick={handleDeleteOrder}
               disabled={deletingOrder}

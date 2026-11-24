@@ -54,12 +54,20 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
         <Link href={`/orders/${id}`} className="text-xs text-muted hover:text-foreground">
           ← Back to Order
         </Link>
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 bg-lime text-black font-bold text-xs rounded-lg hover:bg-lime-dark flex items-center gap-1.5 shadow"
-        >
-          <span>🖨️</span> Print / Save as PDF
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/orders/${id}/edit`}
+            className="px-3.5 py-2 bg-card border border-border text-foreground hover:border-lime/40 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-colors"
+          >
+            <span>✏️</span> Edit Bill
+          </Link>
+          <button
+            onClick={() => window.print()}
+            className="px-4 py-2 bg-lime text-black font-bold text-xs rounded-lg hover:bg-lime-dark flex items-center gap-1.5 shadow"
+          >
+            <span>🖨️</span> Print / Save as PDF
+          </button>
+        </div>
       </div>
 
       {/* Printable A4 Sheet */}

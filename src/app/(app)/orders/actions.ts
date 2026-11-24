@@ -194,6 +194,114 @@ export async function updateOrder(id: string, updates: Partial<Order>) {
   revalidatePath('/accounts')
 }
 
+export async function updateCompleteOrder(
+  id: string,
+  data: {
+    order_no?: string
+    customer_id?: string
+    order_date?: string
+    status?: OrderStatus
+    advance_amount?: number
+    advance_date?: string | null
+    delivery_charge?: number
+    delivery_date?: string | null
+    balance_received?: boolean
+    link_confirmed?: boolean
+    notes?: string | null
+    items: {
+      id?: string
+      product_id?: string | null
+      description: string
+      qty: number
+      unit_price: number
+    }[]
+  }
+): Promise<string> {
+  const db = await readDB()
+  const cleanId = decodeURIComponent(id || '').trim()
+  const idx = db.orders.findIndex(
+    (o) => o.id === cleanId || o.order_no?.toLowerCase() === cleanId.toLowerCase()
+  )
+  if (idx === -1) throw new Error('Order not found')
+
+  const current = db.orders[idx]
+  const targetId = current.id
+
+  let newStatus = data.status || current.status
+  const effAdvance = data.advance_amount !== undefined ? Number(data.advance_amount) || 0 : current.advance_amount || 0
+
+  // Business rule check
+  if (newStatus !== 'Awaiting Advance' && newStatus !== 'Cancelled' && effAdvance <= 0) {
+    throw new Error('Business Rule: Work starts only after advance payment. Cannot move past Awaiting Advance until advance is recorded.')
+  }
+
+  let balanceReceived = data.balance_received !== undefined ? data.balance_received : current.balance_received
+  if (newStatus === 'Closed') {
+    balanceReceived = true
+  }
+
+  // Auto-advance if advance is paid
+  if (!data.status && current.status === 'Awaiting Advance' && effAdvance > 0) {
+    newStatus = 'In Progress'
+  }
+
+  // Update order record
+  db.orders[idx] = {
+    ...current,
+    order_no: data.order_no?.trim() || current.order_no,
+    customer_id: data.customer_id || current.customer_id,
+    order_date: data.order_date || current.order_date,
+    status: newStatus,
+    advance_amount: effAdvance,
+    advance_date: effAdvance > 0 ? (data.advance_date || current.advance_date || new Date().toISOString().split('T')[0]) : null,
+    delivery_charge: data.delivery_charge !== undefined ? Number(data.delivery_charge) || 0 : current.delivery_charge,
+    delivery_date: data.delivery_date !== undefined ? data.delivery_date : current.delivery_date,
+    balance_received: balanceReceived,
+    link_confirmed: data.link_confirmed !== undefined ? data.link_confirmed : current.link_confirmed,
+    notes: data.notes !== undefined ? (data.notes ? data.notes.trim() : null) : current.notes,
+  }
+
+  // Replace order items with updated items
+  if (data.items && Array.isArray(data.items)) {
+    db.order_items = db.order_items.filter((it) => it.order_id !== targetId && it.order_id !== cleanId)
+    data.items.forEach((it, i) => {
+      if (it.description?.trim()) {
+        db.order_items.push({
+          id: it.id || `item_${Date.now()}_${i}`,
+          user_id: 'owner',
+          order_id: targetId,
+          product_id: it.product_id || null,
+          description: it.description.trim(),
+          qty: Number(it.qty) || 1,
+          unit_price: Number(it.unit_price) || 0,
+          created_at: new Date().toISOString(),
+        })
+      }
+    })
+  }
+
+  db.activities.unshift({
+    id: `act_${Date.now()}`,
+    user_id: 'owner',
+    customer_id: db.orders[idx].customer_id,
+    lead_id: null,
+    type: 'note',
+    text: `Updated complete bill ${db.orders[idx].order_no}`,
+    created_at: new Date().toISOString(),
+  })
+
+  await writeDB(db)
+
+  revalidatePath('/orders')
+  revalidatePath(`/orders/${targetId}`)
+  revalidatePath(`/orders/${targetId}/invoice`)
+  revalidatePath('/dashboard')
+  revalidatePath('/accounts')
+  revalidatePath('/customers')
+
+  return targetId
+}
+
 export async function addOrderItem(
   orderId: string,
   item: { product_id?: string; description: string; qty: number; unit_price: number }

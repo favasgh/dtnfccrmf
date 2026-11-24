@@ -190,13 +190,23 @@ export default function OrdersPage() {
                           Due: {formatINR(o.balance_due || 0)}
                         </span>
                       )}
-                      <button
-                        onClick={(e) => handleDirectDelete(e, o.id, o.order_no)}
-                        className="mt-2 text-xs text-muted hover:text-danger p-1 rounded hover:bg-card-hover"
-                        title="Delete Order"
-                      >
-                        🗑️ Delete
-                      </button>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Link
+                          href={`/orders/${o.id}/edit`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs text-muted hover:text-lime p-1 rounded hover:bg-card-hover font-medium flex items-center gap-1 transition-colors"
+                          title="Edit Complete Bill"
+                        >
+                          ✏️ Edit
+                        </Link>
+                        <button
+                          onClick={(e) => handleDirectDelete(e, o.id, o.order_no)}
+                          className="text-xs text-muted hover:text-danger p-1 rounded hover:bg-card-hover"
+                          title="Delete Order"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </Link>
