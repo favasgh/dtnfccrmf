@@ -89,13 +89,16 @@ export async function updateCustomer(id: string, updates: Partial<Customer>) {
 
 export async function deleteCustomer(id: string) {
   const db = await readDB()
-  if (db.orders.some((o) => o.customer_id === id)) {
-    throw new Error('Cannot delete customer with existing orders.')
-  }
+  const custOrders = db.orders.filter((o) => o.customer_id === id)
+  const orderIds = custOrders.map((o) => o.id)
+  db.order_items = db.order_items.filter((it) => !orderIds.includes(it.order_id))
+  db.orders = db.orders.filter((o) => o.customer_id !== id)
   db.customers = db.customers.filter((c) => c.id !== id)
   db.activities = db.activities.filter((a) => a.customer_id !== id)
   await writeDB(db)
   revalidatePath('/customers')
+  revalidatePath('/orders')
+  revalidatePath('/dashboard')
 }
 
 export async function addCustomerActivity(customerId: string, type: Activity['type'], text: string) {

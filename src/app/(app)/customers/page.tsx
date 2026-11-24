@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Customer } from '@/lib/types'
 import { formatINR } from '@/lib/utils'
-import { getCustomers, createCustomer } from './actions'
+import { getCustomers, createCustomer, deleteCustomer } from './actions'
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<(Customer & { orders_count?: number; total_spent?: number })[]>([])
@@ -35,6 +35,18 @@ export default function CustomersPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  async function handleDirectDelete(e: React.MouseEvent, id: string, name: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Delete customer "${name}" and all associated orders?`)) return
+    try {
+      await deleteCustomer(id)
+      loadData()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete customer')
+    }
+  }
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -124,13 +136,21 @@ export default function CustomersPage() {
                     {c.phone && <p className="text-xs text-lime font-mono mt-1">{c.phone}</p>}
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right flex flex-col items-end">
                     <span className="text-xs font-semibold text-foreground">
                       {formatINR(c.total_spent || 0)}
                     </span>
                     <span className="block text-[10px] text-muted">
                       {c.orders_count || 0} order{(c.orders_count || 0) === 1 ? '' : 's'}
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDirectDelete(e, c.id, c.name)}
+                      className="text-muted hover:text-danger text-xs mt-1 p-0.5"
+                      title="Delete customer"
+                    >
+                      ✕ Delete
+                    </button>
                   </div>
                 </div>
               </Link>

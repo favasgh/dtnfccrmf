@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES } from '@/lib/types'
 import { formatDate, isOverdue, isDueToday } from '@/lib/utils'
-import { getLeads, createLead, importLeadsFromCsv } from './actions'
+import { getLeads, createLead, deleteLead, importLeadsFromCsv } from './actions'
 
 const STAGE_COLORS: Record<LeadStage, string> = {
   New: 'bg-gray-800 text-gray-300 border-gray-700',
@@ -108,6 +108,18 @@ export default function LeadsPage() {
       alert(err instanceof Error ? err.message : 'Failed to import')
     } finally {
       setImporting(false)
+    }
+  }
+
+  async function handleDirectDelete(e: React.MouseEvent, id: string, name: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Delete lead "${name}"?`)) return
+    try {
+      await deleteLead(id)
+      loadData()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete')
     }
   }
 
@@ -214,7 +226,19 @@ export default function LeadsPage() {
               const overdue = isOverdue(lead.next_follow_up_date)
               const dueToday = isDueToday(lead.next_follow_up_date)
 
-              return (
+              async function handleDirectDelete(e: React.MouseEvent, id: string, name: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Delete lead "${name}"?`)) return
+    try {
+      await deleteLead(id)
+      loadData()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete')
+    }
+  }
+
+  return (
                 <Link
                   key={lead.id}
                   href={`/leads/${lead.id}`}
@@ -231,13 +255,23 @@ export default function LeadsPage() {
                       {lead.phone && <div className="text-xs text-muted mt-0.5">{lead.phone}</div>}
                     </div>
 
-                    <span
-                      className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${
-                        STAGE_COLORS[lead.stage] || 'bg-card border-border text-foreground'
-                      }`}
-                    >
-                      {lead.stage}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${
+                          STAGE_COLORS[lead.stage] || 'bg-card border-border text-foreground'
+                        }`}
+                      >
+                        {lead.stage}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDirectDelete(e, lead.id, lead.name)}
+                        className="text-muted hover:text-danger p-1 text-xs"
+                        title="Delete lead"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between text-xs border-t border-border/50 pt-2 text-muted">
@@ -266,7 +300,19 @@ export default function LeadsPage() {
           <div className="kanban-scroll flex gap-3 pb-4">
             {LEAD_STAGES.map((stage) => {
               const stageLeads = leads.filter((l) => l.stage === stage)
-              return (
+              async function handleDirectDelete(e: React.MouseEvent, id: string, name: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Delete lead "${name}"?`)) return
+    try {
+      await deleteLead(id)
+      loadData()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete')
+    }
+  }
+
+  return (
                 <div
                   key={stage}
                   className="w-72 shrink-0 bg-card/60 border border-border rounded-xl p-3 flex flex-col max-h-[75vh]"

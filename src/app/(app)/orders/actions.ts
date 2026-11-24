@@ -193,6 +193,16 @@ export async function addOrderItem(
   revalidatePath('/orders')
 }
 
+export async function deleteOrder(id: string) {
+  const db = await readDB()
+  db.orders = db.orders.filter((o) => o.id !== id)
+  db.order_items = db.order_items.filter((it) => it.order_id !== id)
+  await writeDB(db)
+  revalidatePath('/orders')
+  revalidatePath('/dashboard')
+  revalidatePath('/accounts')
+}
+
 export async function removeOrderItem(orderId: string, itemId: string) {
   const db = await readDB()
   db.order_items = db.order_items.filter((it) => it.id !== itemId)

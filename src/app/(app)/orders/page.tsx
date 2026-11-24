@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Order, OrderStatus, ORDER_STATUSES } from '@/lib/types'
 import { formatINR, formatDate } from '@/lib/utils'
-import { getOrders } from './actions'
+import { getOrders, deleteOrder } from './actions'
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   'Awaiting Advance': 'bg-amber-950 text-amber-300 border-amber-800',
@@ -40,6 +40,18 @@ export default function OrdersPage() {
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     loadData()
+  }
+
+  async function handleDirectDelete(e: React.MouseEvent, id: string, orderNo: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Are you sure you want to delete order ${orderNo}?`)) return
+    try {
+      await deleteOrder(id)
+      loadData()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete order')
+    }
   }
 
   return (
@@ -141,7 +153,7 @@ export default function OrdersPage() {
                       <span className="text-xs text-muted block mt-0.5">{formatDate(o.order_date)}</span>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end">
                       <span className="text-base font-bold text-foreground block">
                         {formatINR(o.total_amount || 0)}
                       </span>
@@ -150,6 +162,13 @@ export default function OrdersPage() {
                           Due: {formatINR(o.balance_due || 0)}
                         </span>
                       )}
+                      <button
+                        onClick={(e) => handleDirectDelete(e, o.id, o.order_no)}
+                        className="mt-2 text-xs text-muted hover:text-danger p-1 rounded hover:bg-card-hover"
+                        title="Delete Order"
+                      >
+                        🗑️ Delete
+                      </button>
                     </div>
                   </div>
                 </Link>

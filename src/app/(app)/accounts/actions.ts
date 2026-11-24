@@ -69,6 +69,38 @@ export async function addTransaction(formData: {
   return newTx
 }
 
+export async function updateTransaction(
+  id: string,
+  formData: {
+    type?: TransactionType
+    category?: string
+    amount?: number
+    date?: string
+    payment_method?: 'upi' | 'bank' | 'cash'
+    description?: string
+  }
+) {
+  const db = await readDB()
+  if (!db.transactions) db.transactions = []
+  const idx = db.transactions.findIndex((t) => t.id === id)
+  if (idx === -1) throw new Error('Transaction not found')
+
+  const current = db.transactions[idx]
+  db.transactions[idx] = {
+    ...current,
+    type: formData.type || current.type,
+    category: formData.category !== undefined ? formData.category : current.category,
+    amount: formData.amount !== undefined ? Number(formData.amount) : current.amount,
+    date: formData.date || current.date,
+    payment_method: formData.payment_method || current.payment_method,
+    description: formData.description !== undefined ? formData.description.trim() : current.description,
+  }
+
+  await writeDB(db)
+  revalidatePath('/accounts')
+  revalidatePath('/dashboard')
+}
+
 export async function deleteTransaction(id: string) {
   const db = await readDB()
   if (db.transactions) {

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Order, OrderItem, OrderStatus, ORDER_STATUSES, Product, Customer } from '@/lib/types'
 import { formatINR, formatDate } from '@/lib/utils'
-import { getOrder, updateOrder, addOrderItem, removeOrderItem, getProductsForOrderSelect } from '../actions'
+import { getOrder, updateOrder, deleteOrder, addOrderItem, removeOrderItem, getProductsForOrderSelect } from '../actions'
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   'Awaiting Advance': 'bg-amber-950 text-amber-300 border-amber-800',
@@ -19,6 +20,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [items, setItems] = useState<(OrderItem & { product?: Product })[]>([])
   const [customer, setCustomer] = useState<Customer | null>(null)
@@ -26,6 +28,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+
+  // Payment & Notes editable state
+  const [advanceAmount, setAdvanceAmount] = useState<number>(0)
+  const [deliveryCharge, setDeliveryCharge] = useState<number>(0)
+  const [orderNotes, setOrderNotes] = useState<string>('')
+  const [savingPayment, setSavingPayment] = useState(false)
+  const [deletingOrder, setDeletingOrder] = useState(false)
 
   // Add Item Modal / Row
   const [showAddItem, setShowAddItem] = useState(false)
@@ -49,6 +58,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setItems(res.items)
       setCustomer(res.customer)
       setProducts(pList as Product[])
+      if (res.order) {
+        setAdvanceAmount(res.order.advance_amount || 0)
+        setDeliveryCharge(res.order.delivery_charge || 0)
+        setOrderNotes(res.order.notes || '')
+      }
     } finally {
       setLoading(false)
     }
@@ -133,6 +147,37 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  async function handleSavePaymentAndNotes() {
+    setSavingPayment(true)
+    setErrorMsg('')
+    try {
+      await updateOrder(id, {
+        advance_amount: Number(advanceAmount) || 0,
+        delivery_charge: Number(deliveryCharge) || 0,
+        notes: orderNotes.trim() || null,
+      })
+      setSuccessMsg('Payment & notes saved successfully!')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      loadData()
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to save payment details')
+    } finally {
+      setSavingPayment(false)
+    }
+  }
+
+  async function handleDeleteOrder() {
+    if (!confirm(`Are you sure you want to delete order ${order?.order_no}? This will remove all items and cannot be undone.`)) return
+    setDeletingOrder(true)
+    try {
+      await deleteOrder(id)
+      router.push('/orders')
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete order')
+      setDeletingOrder(false)
+    }
+  }
+
   if (loading) {
     return (
       <>
@@ -160,17 +205,26 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     <>
       <Header title={`Order ${order.order_no}`} />
       <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-        {/* Navigation & Invoice Link */}
+        {/* Navigation & Actions */}
         <div className="flex justify-between items-center">
           <Link href="/orders" className="text-xs text-muted hover:text-foreground">
             ← Back to Orders
           </Link>
-          <Link
-            href={`/orders/${id}/invoice`}
-            className="px-3 py-1.5 bg-lime text-black font-semibold text-xs rounded-lg hover:bg-lime-dark flex items-center gap-1.5"
-          >
-            <span>📄</span> View Printable Invoice
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDeleteOrder}
+              disabled={deletingOrder}
+              className="px-3 py-1.5 bg-danger/10 text-danger border border-danger/30 font-semibold text-xs rounded-lg hover:bg-danger/20 transition-colors disabled:opacity-50"
+            >
+              {deletingOrder ? 'Deleting...' : '🗑️ Delete Order'}
+            </button>
+            <Link
+              href={`/orders/${id}/invoice`}
+              className="px-3 py-1.5 bg-lime text-black font-semibold text-xs rounded-lg hover:bg-lime-dark flex items-center gap-1.5"
+            >
+              <span>📄</span> View Printable Invoice
+            </Link>
+          </div>
         </div>
 
         {errorMsg && (
@@ -370,23 +424,23 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <input
                   type="number"
                   min={0}
-                  defaultValue={order.delivery_charge}
-                  onBlur={(e) => handleUpdateField({ delivery_charge: Number(e.target.value) || 0 })}
-                  className="w-16 px-1.5 py-0.5 bg-black border border-border rounded text-right text-xs text-foreground"
+                  value={deliveryCharge}
+                  onChange={(e) => setDeliveryCharge(Number(e.target.value) || 0)}
+                  className="w-20 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
                 />
               </div>
             </div>
 
-            <div className="flex justify-between text-muted pt-1 border-t border-border/40">
+            <div className="flex justify-between items-center text-muted pt-1 border-t border-border/40">
               <span>Advance Paid:</span>
               <div className="flex items-center gap-1">
                 <span>₹</span>
                 <input
                   type="number"
                   min={0}
-                  defaultValue={order.advance_amount}
-                  onBlur={(e) => handleUpdateField({ advance_amount: Number(e.target.value) || 0 })}
-                  className="w-20 px-1.5 py-0.5 bg-black border border-border rounded text-right text-xs text-foreground"
+                  value={advanceAmount}
+                  onChange={(e) => setAdvanceAmount(Number(e.target.value) || 0)}
+                  className="w-24 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
                 />
               </div>
             </div>
@@ -397,6 +451,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 {formatINR(order.balance_due || 0)}
               </span>
             </div>
+
+            <div className="pt-2">
+              <label className="block text-[11px] text-muted mb-1">Order Notes</label>
+              <textarea
+                rows={2}
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                placeholder="Special instructions or notes..."
+                className="w-full px-2.5 py-1.5 bg-black border border-border rounded text-xs text-foreground focus:ring-1 focus:ring-lime"
+              />
+            </div>
+
+            <button
+              onClick={handleSavePaymentAndNotes}
+              disabled={savingPayment}
+              className="w-full mt-2 py-2 bg-lime text-black font-semibold text-xs rounded hover:bg-lime-dark disabled:opacity-50 transition-colors"
+            >
+              {savingPayment ? 'Saving...' : '💾 Save Payment & Notes'}
+            </button>
           </div>
 
           {/* Business Owner Profit Box (Visible only to you) */}

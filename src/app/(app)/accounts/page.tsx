@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Header from '@/components/layout/Header'
 import { Transaction, TransactionType, ExpenseCategory, EXPENSE_CATEGORIES } from '@/lib/types'
 import { formatINR, formatDate } from '@/lib/utils'
-import { getTransactions, addTransaction, deleteTransaction, getFinancialSummary } from './actions'
+import { getTransactions, addTransaction, updateTransaction, deleteTransaction, getFinancialSummary } from './actions'
 
 export default function AccountsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -23,8 +23,9 @@ export default function AccountsPage() {
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [search, setSearch] = useState('')
 
-  // Add Transaction Modal
+  // Add / Edit Transaction Modal
   const [showModal, setShowModal] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formType, setFormType] = useState<TransactionType>('expense')
   const [formCategory, setFormCategory] = useState<ExpenseCategory>('printo')
   const [formAmount, setFormAmount] = useState<number | ''>('')
@@ -61,7 +62,31 @@ export default function AccountsPage() {
     loadData()
   }
 
-  async function handleAdd(e: React.FormEvent) {
+  function handleOpenAdd(type: TransactionType) {
+    setEditingId(null)
+    setFormType(type)
+    setFormCategory('printo')
+    setFormAmount('')
+    setFormDate(new Date().toISOString().split('T')[0])
+    setFormMethod('upi')
+    setFormDesc('')
+    setErrorMsg('')
+    setShowModal(true)
+  }
+
+  function handleOpenEdit(tx: Transaction) {
+    setEditingId(tx.id)
+    setFormType(tx.type)
+    setFormCategory(tx.category as ExpenseCategory)
+    setFormAmount(tx.amount)
+    setFormDate(tx.date)
+    setFormMethod(tx.payment_method)
+    setFormDesc(tx.description)
+    setErrorMsg('')
+    setShowModal(true)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErrorMsg('')
     if (!formAmount || Number(formAmount) <= 0) {
@@ -75,21 +100,30 @@ export default function AccountsPage() {
 
     setSubmitting(true)
     try {
-      await addTransaction({
-        type: formType,
-        category: formCategory,
-        amount: Number(formAmount),
-        date: formDate,
-        payment_method: formMethod,
-        description: formDesc.trim(),
-      })
+      if (editingId) {
+        await updateTransaction(editingId, {
+          type: formType,
+          category: formCategory,
+          amount: Number(formAmount),
+          date: formDate,
+          payment_method: formMethod,
+          description: formDesc.trim(),
+        })
+      } else {
+        await addTransaction({
+          type: formType,
+          category: formCategory,
+          amount: Number(formAmount),
+          date: formDate,
+          payment_method: formMethod,
+          description: formDesc.trim(),
+        })
+      }
       setShowModal(false)
-      setFormAmount('')
-      setFormDesc('')
-      setFormCategory('printo')
+      setEditingId(null)
       loadData()
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to add transaction')
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to save transaction')
     } finally {
       setSubmitting(false)
     }
@@ -200,19 +234,13 @@ export default function AccountsPage() {
 
           <div className="flex gap-2">
             <button
-              onClick={() => {
-                setFormType('expense')
-                setShowModal(true)
-              }}
+              onClick={() => handleOpenAdd('expense')}
               className="flex-1 sm:flex-none px-4 py-2.5 bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"
             >
               <span>-</span> Add Expense
             </button>
             <button
-              onClick={() => {
-                setFormType('income')
-                setShowModal(true)
-              }}
+              onClick={() => handleOpenAdd('income')}
               className="flex-1 sm:flex-none px-4 py-2.5 bg-lime text-black hover:bg-lime-dark text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"
             >
               <span>+</span> Add Income
@@ -309,7 +337,14 @@ export default function AccountsPage() {
                         {tx.type === 'expense' ? '-' : '+'}
                         {formatINR(tx.amount)}
                       </td>
-                      <td className="py-3 text-center">
+                      <td className="py-3 text-center whitespace-nowrap">
+                        <button
+                          onClick={() => handleOpenEdit(tx)}
+                          className="text-muted hover:text-lime text-xs px-1 mr-1"
+                          title="Edit entry"
+                        >
+                          ✏️
+                        </button>
                         <button
                           onClick={() => handleDelete(tx.id)}
                           className="text-muted hover:text-danger text-xs px-1"
@@ -332,7 +367,7 @@ export default function AccountsPage() {
             <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="font-bold text-lg text-lime">
-                  {formType === 'expense' ? 'Log Expense' : 'Log Income'}
+                  {editingId ? 'Edit Transaction' : formType === 'expense' ? 'Log Expense' : 'Log Income'}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -348,7 +383,7 @@ export default function AccountsPage() {
                 </div>
               )}
 
-              <form onSubmit={handleAdd} className="space-y-3">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {/* Type selector */}
                 <div className="grid grid-cols-2 gap-2 p-1 bg-black rounded-lg border border-border">
                   <button
@@ -442,7 +477,7 @@ export default function AccountsPage() {
                     disabled={submitting}
                     className="flex-1 py-2.5 bg-lime text-black font-semibold rounded-lg text-xs hover:bg-lime-dark disabled:opacity-50"
                   >
-                    {submitting ? 'Saving...' : 'Record Transaction'}
+                    {submitting ? 'Saving...' : editingId ? 'Save Changes' : formType === 'expense' ? 'Record Expense' : 'Record Income'}
                   </button>
                   <button
                     type="button"
