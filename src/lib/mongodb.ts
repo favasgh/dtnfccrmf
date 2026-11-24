@@ -1,4 +1,12 @@
 import { MongoClient, Db } from 'mongodb'
+import dns from 'dns'
+
+// Ensure Node can resolve MongoDB Atlas SRV records across all network/ISP configurations
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1'])
+} catch {
+  // Ignore if custom DNS cannot be set
+}
 
 const uri = process.env.MONGODB_URI || ''
 const dbName = process.env.MONGODB_DB || 'doubletap'

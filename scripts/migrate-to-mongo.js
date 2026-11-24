@@ -1,6 +1,25 @@
 const { MongoClient } = require('mongodb')
 const fs = require('fs')
 const path = require('path')
+const dns = require('dns')
+
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1'])
+} catch (e) {}
+
+// Load .env.local if present
+const envLocalPath = path.join(__dirname, '..', '.env.local')
+if (fs.existsSync(envLocalPath)) {
+  const envContent = fs.readFileSync(envLocalPath, 'utf8')
+  envContent.split('\n').forEach((line) => {
+    const match = line.match(/^([^=]+)=(.*)$/)
+    if (match) {
+      const key = match[1].trim()
+      const val = match[2].trim()
+      if (!process.env[key]) process.env[key] = val
+    }
+  })
+}
 
 const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/doubletap'
 const dbName = process.env.MONGODB_DB || 'doubletap'
