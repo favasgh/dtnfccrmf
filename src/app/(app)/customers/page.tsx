@@ -172,7 +172,7 @@ export default function CustomersPage() {
                       <p className="text-xs text-muted">{c.business_name}</p>
                     )}
                     {c.phone && <p className="text-xs text-lime font-mono mt-1">{c.phone}</p>}
-                    
+
                     <div className="mt-3">
                       <button
                         type="button"
