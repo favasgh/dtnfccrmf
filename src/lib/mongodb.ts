@@ -1,11 +1,14 @@
 import { MongoClient, Db } from 'mongodb'
 import dns from 'dns'
+import { promisify } from 'util'
 
-// Force Google & Cloudflare DNS to guarantee SRV resolution across all ISPs (e.g. Airtel, Jio)
+const resolveSrvAsync = promisify(dns.resolveSrv)
+const resolveTxtAsync = promisify(dns.resolveTxt)
+
 try {
   dns.setServers(['8.8.8.8', '1.1.1.1'])
 } catch {
-  // Ignore if custom DNS cannot be set
+  // Ignore
 }
 
 const dbName = process.env.MONGODB_DB || 'doubletap'
@@ -18,12 +21,50 @@ export function isMongoConfigured(): boolean {
   return currentUri.trim().length > 0 && !currentUri.includes('YOUR_MONGODB_URI_HERE')
 }
 
-export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db } | null> {
-  if (!isMongoConfigured()) {
-    return null
+async function getEffectiveUri(rawUri: string): Promise<string> {
+  if (!rawUri.startsWith('mongodb+srv://')) {
+    return rawUri
   }
 
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1'])
+    const withoutPrefix = rawUri.replace('mongodb+srv://', '')
+    const [authAndHost, ...restQuery] = withoutPrefix.split('?')
+    const atIdx = authAndHost.lastIndexOf('@')
+    const auth = atIdx !== -1 ? authAndHost.slice(0, atIdx + 1) : ''
+    const hostAndPath = atIdx !== -1 ? authAndHost.slice(atIdx + 1) : authAndHost
+    const slashIdx = hostAndPath.indexOf('/')
+    const hostname = slashIdx !== -1 ? hostAndPath.slice(0, slashIdx) : hostAndPath
+    const pathPart = slashIdx !== -1 ? hostAndPath.slice(slashIdx) : '/doubletap'
+
+    const addresses = await resolveSrvAsync(`_mongodb._tcp.${hostname}`)
+    const hosts = addresses.map((a) => `${a.name}:${a.port}`).join(',')
+
+    let options = 'ssl=true&authSource=admin&retryWrites=true&w=majority'
+    try {
+      const txt = await resolveTxtAsync(hostname)
+      if (txt?.[0]?.[0]) {
+        options = `${txt[0][0]}&ssl=true&retryWrites=true&w=majority`
+      }
+    } catch {
+      // Ignore
+    }
+
+    const query = restQuery.length > 0 ? `?${restQuery.join('?')}&${options}` : `?${options}`
+    return `mongodb://${auth}${hosts}${pathPart}${query}`
+  } catch (err) {
+    console.warn('[MongoDB] Direct SRV resolution fallback error, using raw URI:', err)
+    return rawUri
+  }
+}
+
+export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db } | null> {
   const currentUri = process.env.MONGODB_URI || ''
+
+  if (!isMongoConfigured()) {
+    console.warn('[MongoDB] isMongoConfigured returned false!')
+    return null
+  }
 
   // If already connected and ping succeeds, return cached connection
   if (cachedClient && cachedDb) {
@@ -31,14 +72,16 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
       await cachedDb.command({ ping: 1 })
       return { client: cachedClient, db: cachedDb }
     } catch {
-      // Stale connection, reconnect
       cachedClient = null
       cachedDb = null
     }
   }
 
   try {
-    const client = new MongoClient(currentUri, {
+    const effectiveUri = await getEffectiveUri(currentUri)
+    console.log('[MongoDB] Connecting to MongoDB with URI:', effectiveUri.replace(/:([^@]+)@/, ':****@'))
+
+    const client = new MongoClient(effectiveUri, {
       connectTimeoutMS: 10000,
       socketTimeoutMS: 20000,
       serverSelectionTimeoutMS: 10000,
@@ -46,6 +89,7 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 
     await client.connect()
     const db = client.db(dbName)
+    console.log('✅ [MongoDB] Successfully connected to database:', dbName)
 
     cachedClient = client
     cachedDb = db
@@ -54,7 +98,7 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
   } catch (error) {
     cachedClient = null
     cachedDb = null
-    console.error('❌ Failed to connect to MongoDB:', error)
+    console.error('❌ Failed to connect to MongoDB in Next.js:', error)
     return null
   }
 }

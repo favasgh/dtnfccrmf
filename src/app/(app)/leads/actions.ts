@@ -10,6 +10,7 @@ export async function getLeads(filters?: {
   search?: string
 }): Promise<Lead[]> {
   const db = await readDB()
+  console.log('[getLeads] Total leads in db schema:', db.leads.length, 'Filter stage:', filters?.stage)
   let list = [...db.leads]
 
   if (filters?.stage && filters.stage !== 'ALL') {
