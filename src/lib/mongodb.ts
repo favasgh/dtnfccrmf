@@ -16,8 +16,15 @@ const dbName = process.env.MONGODB_DB || 'doubletap'
 const DEFAULT_ATLAS_URI =
   'mongodb://mfavax_db_user:BV2LeiA5YTPn85QG@ac-r4uff4o-shard-00-00.2apd5qu.mongodb.net:27017,ac-r4uff4o-shard-00-01.2apd5qu.mongodb.net:27017,ac-r4uff4o-shard-00-02.2apd5qu.mongodb.net:27017/doubletap?ssl=true&replicaSet=atlas-zm4nze-shard-0&authSource=admin&retryWrites=true&w=majority'
 
-let cachedClient: MongoClient | null = null
-let cachedDb: Db | null = null
+// Global caching for Next.js (dev server and serverless function reuse)
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoClientPromise: Promise<{ client: MongoClient; db: Db }> | undefined
+  // eslint-disable-next-line no-var
+  var _mongoClient: MongoClient | undefined
+  // eslint-disable-next-line no-var
+  var _mongoDb: Db | undefined
+}
 
 export function isMongoConfigured(): boolean {
   const currentUri = process.env.MONGODB_URI || DEFAULT_ATLAS_URI
@@ -25,6 +32,7 @@ export function isMongoConfigured(): boolean {
 }
 
 async function getEffectiveUri(rawUri: string): Promise<string> {
+  // If it's already a direct replica set URI, return directly without DNS SRV lookup
   if (!rawUri.startsWith('mongodb+srv://')) {
     return rawUri
   }
@@ -56,52 +64,53 @@ async function getEffectiveUri(rawUri: string): Promise<string> {
     const query = restQuery.length > 0 ? `?${restQuery.join('?')}&${options}` : `?${options}`
     return `mongodb://${auth}${hosts}${pathPart}${query}`
   } catch (err) {
-    console.warn('[MongoDB] Direct SRV resolution fallback error, using raw URI:', err)
-    return rawUri
+    console.warn('[MongoDB] Direct SRV resolution fallback error, using direct Atlas URI:', err)
+    return DEFAULT_ATLAS_URI
   }
 }
 
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db } | null> {
-  const currentUri = process.env.MONGODB_URI || DEFAULT_ATLAS_URI
-
   if (!isMongoConfigured()) {
-    console.warn('[MongoDB] isMongoConfigured returned false!')
     return null
   }
 
-  // If already connected and ping succeeds, return cached connection
-  if (cachedClient && cachedDb) {
-    try {
-      await cachedDb.command({ ping: 1 })
-      return { client: cachedClient, db: cachedDb }
-    } catch {
-      cachedClient = null
-      cachedDb = null
-    }
+  // Fast path: Reuse existing established client and database
+  if (globalThis._mongoClient && globalThis._mongoDb) {
+    return { client: globalThis._mongoClient, db: globalThis._mongoDb }
+  }
+
+  // If a connection attempt is already in flight, reuse the promise so concurrent requests don't duplicate
+  if (!globalThis._mongoClientPromise) {
+    globalThis._mongoClientPromise = (async () => {
+      const currentUri = process.env.MONGODB_URI || DEFAULT_ATLAS_URI
+      const effectiveUri = await getEffectiveUri(currentUri)
+
+      const client = new MongoClient(effectiveUri, {
+        connectTimeoutMS: 5000,
+        socketTimeoutMS: 15000,
+        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 10,
+        minPoolSize: 1,
+        maxIdleTimeMS: 60000,
+      })
+
+      await client.connect()
+      const db = client.db(dbName)
+      globalThis._mongoClient = client
+      globalThis._mongoDb = db
+      return { client, db }
+    })().catch((err) => {
+      globalThis._mongoClientPromise = undefined
+      globalThis._mongoClient = undefined
+      globalThis._mongoDb = undefined
+      console.error('❌ Failed to connect to MongoDB in Next.js:', err)
+      throw err
+    })
   }
 
   try {
-    const effectiveUri = await getEffectiveUri(currentUri)
-    console.log('[MongoDB] Connecting to MongoDB with URI:', effectiveUri.replace(/:([^@]+)@/, ':****@'))
-
-    const client = new MongoClient(effectiveUri, {
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 20000,
-      serverSelectionTimeoutMS: 10000,
-    })
-
-    await client.connect()
-    const db = client.db(dbName)
-    console.log('✅ [MongoDB] Successfully connected to database:', dbName)
-
-    cachedClient = client
-    cachedDb = db
-
-    return { client, db }
-  } catch (error) {
-    cachedClient = null
-    cachedDb = null
-    console.error('❌ Failed to connect to MongoDB in Next.js:', error)
+    return await globalThis._mongoClientPromise
+  } catch {
     return null
   }
 }

@@ -179,6 +179,13 @@ async function writeMongoCollections(db: Db, data: DatabaseSchema): Promise<void
   ])
 }
 
+declare global {
+  // eslint-disable-next-line no-var
+  var _dtDbCache: { data: DatabaseSchema; timestamp: number } | undefined
+}
+
+const CACHE_TTL_MS = 2500 // 2.5 second in-memory cache collapses redundant parallel calls into 0ms
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function stripMongoId(doc: any) {
   if (!doc) return doc
@@ -188,19 +195,16 @@ function stripMongoId(doc: any) {
 }
 
 export async function readDB(): Promise<DatabaseSchema> {
+  const now = Date.now()
+  if (globalThis._dtDbCache && now - globalThis._dtDbCache.timestamp < CACHE_TTL_MS) {
+    return globalThis._dtDbCache.data
+  }
+
   if (isMongoConfigured()) {
     const mongo = await connectToDatabase()
     if (mongo) {
       try {
         const { db } = mongo
-
-        // Check if database is initialized with products
-        const productsCount = await db.collection('products').countDocuments()
-        if (productsCount === 0) {
-          const localData = await readLocalFileDB()
-          await writeMongoCollections(db, localData)
-          return localData
-        }
 
         const [
           products,
@@ -225,6 +229,14 @@ export async function readDB(): Promise<DatabaseSchema> {
           db.collection('transactions').find({}).toArray(),
           db.collection('counters').findOne({ id: 'order_counter' }),
         ])
+
+        // First-time seed if database is empty
+        if (products.length === 0) {
+          const localData = await readLocalFileDB()
+          await writeMongoCollections(db, localData)
+          globalThis._dtDbCache = { data: localData, timestamp: Date.now() }
+          return localData
+        }
 
         const cleanLeads: Lead[] = leads.map(stripMongoId)
         const cleanCustomers: Customer[] = customers.map(stripMongoId)
@@ -258,7 +270,7 @@ export async function readDB(): Promise<DatabaseSchema> {
           await syncCollection(db, 'customers', cleanCustomers)
         }
 
-        return {
+        const result: DatabaseSchema = {
           products: products.map(stripMongoId),
           leads: cleanLeads,
           customers: cleanCustomers,
@@ -270,17 +282,27 @@ export async function readDB(): Promise<DatabaseSchema> {
           transactions: transactions.map(stripMongoId),
           order_counter: counterDoc?.count || 0,
         }
+
+        globalThis._dtDbCache = { data: result, timestamp: Date.now() }
+        return result
       } catch (err) {
         console.error('Error querying MongoDB, falling back to local file storage:', err)
-        return readLocalFileDB()
+        const fallback = await readLocalFileDB()
+        globalThis._dtDbCache = { data: fallback, timestamp: Date.now() }
+        return fallback
       }
     }
   }
 
-  return readLocalFileDB()
+  const fallback = await readLocalFileDB()
+  globalThis._dtDbCache = { data: fallback, timestamp: Date.now() }
+  return fallback
 }
 
 export async function writeDB(dbData: DatabaseSchema): Promise<void> {
+  // Update in-memory cache instantly so subsequent reads return fresh data immediately
+  globalThis._dtDbCache = { data: dbData, timestamp: Date.now() }
+
   // Always maintain local backup
   await writeLocalFileDB(dbData)
 
