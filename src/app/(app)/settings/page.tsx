@@ -22,6 +22,11 @@ export default function SettingsPage() {
   const [businessPhone, setBusinessPhone] = useState('')
   const [businessEmail, setBusinessEmail] = useState('')
   const [businessAddress, setBusinessAddress] = useState('')
+  const [businessCity, setBusinessCity] = useState('')
+  const [bankAccountNo, setBankAccountNo] = useState('')
+  const [bankIfsc, setBankIfsc] = useState('')
+  const [bankHolderName, setBankHolderName] = useState('')
+  const [googlePayNumber, setGooglePayNumber] = useState('')
   const [paymentDetails, setPaymentDetails] = useState('')
 
   // Templates
@@ -41,6 +46,11 @@ export default function SettingsPage() {
       setBusinessPhone(st.business_phone || '')
       setBusinessEmail(st.business_email || '')
       setBusinessAddress(st.business_address || '')
+      setBusinessCity(st.business_city || 'Calicut')
+      setBankAccountNo(st.bank_account_no || '45362631688')
+      setBankIfsc(st.bank_ifsc || 'SBIN0070454')
+      setBankHolderName(st.bank_holder_name || 'Muhammed Favas')
+      setGooglePayNumber(st.google_pay_number || '8086630149')
       setPaymentDetails(st.payment_details || '')
       setTemplates(tpls)
     } finally {
@@ -62,6 +72,11 @@ export default function SettingsPage() {
         business_phone: businessPhone,
         business_email: businessEmail,
         business_address: businessAddress,
+        business_city: businessCity,
+        bank_account_no: bankAccountNo,
+        bank_ifsc: bankIfsc,
+        bank_holder_name: bankHolderName,
+        google_pay_number: googlePayNumber,
         payment_details: paymentDetails,
       })
       setMsg('Settings saved successfully!')
@@ -174,6 +189,17 @@ export default function SettingsPage() {
               </div>
 
               <div>
+                <label className="block text-xs text-muted mb-1">City / Region (Shown on Bill)</label>
+                <input
+                  type="text"
+                  value={businessCity}
+                  onChange={(e) => setBusinessCity(e.target.value)}
+                  placeholder="Calicut"
+                  className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs text-muted mb-1">Address / Location</label>
                 <input
                   type="text"
@@ -186,23 +212,52 @@ export default function SettingsPage() {
           </div>
 
           {/* Invoice Payment Details (Bank / UPI) */}
-          <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-            <div className="flex justify-between items-center">
-              <h2 className="text-sm font-bold text-lime uppercase tracking-wider">
-                Invoice Payment Details (Bank & UPI)
-              </h2>
+          <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-bold text-lime uppercase tracking-wider">
+              Bank & UPI Details (Shown on Bill Footer)
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-muted mb-1">Account No.</label>
+                <input
+                  type="text"
+                  value={bankAccountNo}
+                  onChange={(e) => setBankAccountNo(e.target.value)}
+                  placeholder="45362631688"
+                  className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">IFSC Code</label>
+                <input
+                  type="text"
+                  value={bankIfsc}
+                  onChange={(e) => setBankIfsc(e.target.value)}
+                  placeholder="SBIN0070454"
+                  className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Account Holder Name</label>
+                <input
+                  type="text"
+                  value={bankHolderName}
+                  onChange={(e) => setBankHolderName(e.target.value)}
+                  placeholder="Muhammed Favas"
+                  className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Google Pay Number</label>
+                <input
+                  type="text"
+                  value={googlePayNumber}
+                  onChange={(e) => setGooglePayNumber(e.target.value)}
+                  placeholder="8086630149"
+                  className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime font-mono"
+                />
+              </div>
             </div>
-            <p className="text-xs text-muted">
-              This text is rendered at the bottom of customer invoices. Never hard-coded.
-            </p>
-
-            <textarea
-              rows={4}
-              value={paymentDetails}
-              onChange={(e) => setPaymentDetails(e.target.value)}
-              placeholder="Bank account number, IFSC, UPI ID, Google Pay number..."
-              className="w-full p-3 font-mono text-xs rounded-lg bg-black border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
-            />
 
             <div className="flex justify-end pt-2">
               <button

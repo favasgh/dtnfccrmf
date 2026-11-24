@@ -39,6 +39,7 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
   const [advanceAmount, setAdvanceAmount] = useState<number | ''>('')
   const [advanceDate, setAdvanceDate] = useState('')
   const [deliveryCharge, setDeliveryCharge] = useState<number | ''>('')
+  const [discount, setDiscount] = useState<number | ''>('')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<ItemDraft[]>([])
 
@@ -67,6 +68,7 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
         setAdvanceAmount(o.advance_amount ? o.advance_amount : '')
         setAdvanceDate(o.advance_date || '')
         setDeliveryCharge(o.delivery_charge ? o.delivery_charge : '')
+        setDiscount(o.discount ? o.discount : '')
         setNotes(o.notes || '')
 
         if (orderRes.items && orderRes.items.length > 0) {
@@ -129,7 +131,9 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
     (sum, it) => sum + (Number(it.qty) || 0) * (Number(it.unit_price) || 0),
     0
   )
-  const grandTotal = itemsSubtotal + (Number(deliveryCharge) || 0)
+  const discountVal = Number(discount) || 0
+  const deliveryVal = Number(deliveryCharge) || 0
+  const grandTotal = Math.max(0, itemsSubtotal + deliveryVal - discountVal)
   const balanceDue = Math.max(0, grandTotal - (Number(advanceAmount) || 0))
 
   async function handleSubmit(e: React.FormEvent) {
@@ -156,6 +160,7 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
         status,
         advance_amount: Number(advanceAmount) || 0,
         advance_date: advanceAmount !== '' && Number(advanceAmount) > 0 ? (advanceDate || orderDate) : null,
+        discount: Number(discount) || 0,
         delivery_charge: Number(deliveryCharge) || 0,
         delivery_date: deliveryDate || null,
         balance_received: balanceReceived,
@@ -477,6 +482,19 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
                 />
                 <p className="text-[10px] text-muted mt-1">Charged at actual cost, kept separate.</p>
               </div>
+
+              <div>
+                <label className="block text-xs text-muted mb-1">Discount (₹)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="0"
+                  className="w-full px-3 py-2 bg-black border border-border rounded-lg text-sm text-foreground focus:ring-1 focus:ring-lime"
+                />
+                <p className="text-[10px] text-muted mt-1">Direct discount deducted from grand total.</p>
+              </div>
             </div>
 
             {/* Live Summary Box */}
@@ -485,12 +503,20 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
                 <span>Items Subtotal:</span>
                 <span className="text-foreground">{formatINR(itemsSubtotal)}</span>
               </div>
-              <div className="flex justify-between text-muted">
-                <span>Delivery Charge:</span>
-                <span className="text-foreground">{formatINR(Number(deliveryCharge) || 0)}</span>
-              </div>
+              {discountVal > 0 && (
+                <div className="flex justify-between text-muted">
+                  <span>Discount:</span>
+                  <span className="text-foreground">-{formatINR(discountVal)}</span>
+                </div>
+              )}
+              {deliveryVal > 0 && (
+                <div className="flex justify-between text-muted">
+                  <span>Delivery Charge:</span>
+                  <span className="text-foreground">{formatINR(deliveryVal)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-semibold text-base pt-2 border-t border-border/60">
-                <span>Total Bill Amount:</span>
+                <span>Grand Total:</span>
                 <span className="text-lime">{formatINR(grandTotal)}</span>
               </div>
               <div className="flex justify-between text-muted">

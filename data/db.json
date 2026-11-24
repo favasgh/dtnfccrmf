@@ -156,10 +156,15 @@
   "settings": {
     "id": "global",
     "business_address": "Calicut, Kerala, India",
+    "business_city": "Calicut",
     "business_email": "hello@doubletapnfc.com",
-    "business_name": "Double Tap NFC",
+    "business_name": "Double tap NFC",
     "business_phone": "+91 8304830149",
-    "payment_details": "Bank: State Bank of India\nAccount: 123456789012\nIFSC: SBIN0001234\nUPI ID: 8304830149@upi\nGoogle Pay / PhonePe: +91 8304830149"
+    "bank_account_no": "45362631688",
+    "bank_ifsc": "SBIN0070454",
+    "bank_holder_name": "Muhammed Favas",
+    "google_pay_number": "8086630149",
+    "payment_details": "Account No. :- 45362631688\nIFSC Code :- SBIN0070454\nName :- Muhammed Favas\nGoogle Pay Number :- 8086630149"
   },
   "whatsapp_templates": [
     {

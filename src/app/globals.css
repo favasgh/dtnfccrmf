@@ -40,6 +40,11 @@ body {
 
 /* ── Print styles for invoices ── */
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body {
     background: white !important;
     color: black !important;
@@ -54,7 +59,7 @@ body {
   }
 
   @page {
-    margin: 15mm;
+    margin: 10mm;
     size: A4;
   }
 }

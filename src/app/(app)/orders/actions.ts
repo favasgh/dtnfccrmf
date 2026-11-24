@@ -7,16 +7,18 @@ import { readDB, writeDB } from '@/lib/db'
 function computeOrderTotals(order: Order, items: OrderItem[], products: Product[]): Order {
   const orderItems = items.filter((it) => it.order_id === order.id)
   const items_subtotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
-  const total_amount = items_subtotal + (order.delivery_charge || 0)
+  const discount = order.discount || 0
+  const total_amount = Math.max(0, items_subtotal + (order.delivery_charge || 0) - discount)
   const balance_due = Math.max(0, total_amount - (order.advance_amount || 0))
   const profit = orderItems.reduce((sum, it) => {
     const prod = products.find((p) => p.id === it.product_id)
     const cost = prod ? prod.my_cost : 0
     return sum + (it.qty * (it.unit_price - cost))
-  }, 0)
+  }, 0) - discount
 
   return {
     ...order,
+    discount,
     total_amount,
     balance_due,
     profit,
@@ -86,6 +88,7 @@ export async function createOrder(
     customer_id: string
     advance_amount: number
     advance_date?: string
+    discount?: number
     delivery_charge: number
     link_confirmed: boolean
     notes?: string
@@ -116,6 +119,7 @@ export async function createOrder(
     status: initialStatus,
     advance_amount: orderData.advance_amount,
     advance_date: orderData.advance_amount > 0 ? (orderData.advance_date || new Date().toISOString().split('T')[0]) : null,
+    discount: orderData.discount || 0,
     delivery_charge: orderData.delivery_charge,
     sent_to_printo_date: null,
     card_ready_date: null,
@@ -203,6 +207,7 @@ export async function updateCompleteOrder(
     status?: OrderStatus
     advance_amount?: number
     advance_date?: string | null
+    discount?: number
     delivery_charge?: number
     delivery_date?: string | null
     balance_received?: boolean
@@ -254,6 +259,7 @@ export async function updateCompleteOrder(
     status: newStatus,
     advance_amount: effAdvance,
     advance_date: effAdvance > 0 ? (data.advance_date || current.advance_date || new Date().toISOString().split('T')[0]) : null,
+    discount: data.discount !== undefined ? Number(data.discount) || 0 : current.discount || 0,
     delivery_charge: data.delivery_charge !== undefined ? Number(data.delivery_charge) || 0 : current.delivery_charge,
     delivery_date: data.delivery_date !== undefined ? data.delivery_date : current.delivery_date,
     balance_received: balanceReceived,

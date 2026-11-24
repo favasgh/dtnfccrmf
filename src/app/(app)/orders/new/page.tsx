@@ -31,6 +31,7 @@ function NewOrderContent() {
   const [advanceAmount, setAdvanceAmount] = useState<number | ''>('')
   const [advanceDate, setAdvanceDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [deliveryCharge, setDeliveryCharge] = useState<number | ''>('')
+  const [discount, setDiscount] = useState<number | ''>('')
   const [linkConfirmed, setLinkConfirmed] = useState<boolean>(false)
   const [notes, setNotes] = useState<string>('')
   const [items, setItems] = useState<ItemDraft[]>([
@@ -156,7 +157,9 @@ function NewOrderContent() {
 
   // Calculations
   const itemsSubtotal = items.reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.unit_price) || 0), 0)
-  const grandTotal = itemsSubtotal + (Number(deliveryCharge) || 0)
+  const discountVal = Number(discount) || 0
+  const deliveryVal = Number(deliveryCharge) || 0
+  const grandTotal = Math.max(0, itemsSubtotal + deliveryVal - discountVal)
   const balanceDue = Math.max(0, grandTotal - (Number(advanceAmount) || 0))
 
   async function handleSubmit(e: React.FormEvent) {
@@ -180,7 +183,8 @@ function NewOrderContent() {
           customer_id: customerId,
           advance_amount: Number(advanceAmount) || 0,
           advance_date: Number(advanceAmount) > 0 ? advanceDate : undefined,
-          delivery_charge: Number(deliveryCharge) || 0,
+          discount: discountVal,
+          delivery_charge: deliveryVal,
           link_confirmed: linkConfirmed,
           notes: notes.trim() || undefined,
         },
@@ -395,6 +399,21 @@ function NewOrderContent() {
               />
               <p className="text-[10px] text-muted mt-1">Charged at actual cost, kept separate.</p>
             </div>
+
+            <div>
+              <label className="block text-xs text-muted mb-1">
+                Discount (₹)
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="0"
+                className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-lime"
+              />
+              <p className="text-[10px] text-muted mt-1">Direct discount deducted from total bill.</p>
+            </div>
           </div>
 
           {/* Computed Summary Box */}
@@ -403,10 +422,18 @@ function NewOrderContent() {
               <span>Items Total:</span>
               <span className="text-foreground">{formatINR(itemsSubtotal)}</span>
             </div>
-            <div className="flex justify-between text-muted">
-              <span>Delivery Charge:</span>
-              <span className="text-foreground">{formatINR(Number(deliveryCharge) || 0)}</span>
-            </div>
+            {discountVal > 0 && (
+              <div className="flex justify-between text-muted">
+                <span>Discount:</span>
+                <span className="text-foreground">-{formatINR(discountVal)}</span>
+              </div>
+            )}
+            {deliveryVal > 0 && (
+              <div className="flex justify-between text-muted">
+                <span>Delivery Charge:</span>
+                <span className="text-foreground">{formatINR(deliveryVal)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-semibold text-foreground pt-1 border-t border-border/60">
               <span>Grand Total:</span>
               <span className="text-lime">{formatINR(grandTotal)}</span>

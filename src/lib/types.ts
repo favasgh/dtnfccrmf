@@ -94,6 +94,7 @@ export interface Order {
   status: OrderStatus
   advance_amount: number
   advance_date: string | null
+  discount?: number
   delivery_charge: number
   sent_to_printo_date: string | null
   card_ready_date: string | null
@@ -143,7 +144,12 @@ export interface Settings {
     business_phone?: string
     business_email?: string
     business_address?: string
+    business_city?: string
     payment_details?: string   // Bank/UPI info shown on invoices
+    bank_account_no?: string
+    bank_ifsc?: string
+    bank_holder_name?: string
+    google_pay_number?: string
     invoice_prefix?: string
   }
   updated_at: string

@@ -546,8 +546,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <div className="grid sm:grid-cols-2 gap-4">
           {/* Totals Breakdown */}
           {(() => {
+            const discountAmount = order.discount || 0
             const liveItemsTotal = items.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
-            const liveGrandTotal = liveItemsTotal + (Number(deliveryCharge) || 0)
+            const liveGrandTotal = Math.max(0, liveItemsTotal + (Number(deliveryCharge) || 0) - discountAmount)
             const liveBalanceDue = Math.max(0, liveGrandTotal - (Number(advanceAmount) || 0))
 
             return (
@@ -560,6 +561,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <span>Items Subtotal:</span>
                   <span className="text-foreground">{formatINR(liveItemsTotal)}</span>
                 </div>
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-muted">
+                    <span>Discount:</span>
+                    <span className="text-foreground">-{formatINR(discountAmount)}</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center text-muted">
                   <span>Delivery Charge:</span>
