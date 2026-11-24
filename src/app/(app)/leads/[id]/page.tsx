@@ -346,17 +346,24 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
 
               <div>
                 <label className="block text-xs text-muted mb-1">Lead Source</label>
-                <select
+                <input
+                  type="text"
+                  list="lead-source-detail-options"
                   value={source}
-                  onChange={(e) => setSource(e.target.value as LeadSource)}
+                  onChange={(e) => setSource(e.target.value)}
+                  placeholder="e.g. Instagram, Referral, Walk-in..."
                   className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
-                >
-                  {LEAD_SOURCES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                />
+                <datalist id="lead-source-detail-options">
+                  <option value="Instagram" />
+                  <option value="Google Maps" />
+                  <option value="Walk-in" />
+                  <option value="Referral" />
+                  <option value="Meta Ads" />
+                  <option value="WhatsApp" />
+                  <option value="Printo Referral" />
+                  <option value="Event / Expo" />
+                </datalist>
               </div>
 
               <div>

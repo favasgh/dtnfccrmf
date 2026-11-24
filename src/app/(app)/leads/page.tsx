@@ -34,7 +34,7 @@ export default function LeadsPage() {
   const [newName, setNewName] = useState('')
   const [newBiz, setNewBiz] = useState('')
   const [newPhone, setNewPhone] = useState('')
-  const [newSource, setNewSource] = useState<LeadSource>('instagram')
+  const [newSource, setNewSource] = useState<string>('Instagram')
   const [newProduct, setNewProduct] = useState('')
   const [newNotes, setNewNotes] = useState('')
   const [creating, setCreating] = useState(false)
@@ -439,17 +439,24 @@ export default function LeadsPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-muted mb-1">Source</label>
-                    <select
+                    <input
+                      type="text"
+                      list="lead-source-modal-options"
                       value={newSource}
-                      onChange={(e) => setNewSource(e.target.value as LeadSource)}
+                      onChange={(e) => setNewSource(e.target.value)}
+                      placeholder="e.g. Instagram, Referral, Walk-in..."
                       className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-lime"
-                    >
-                      {LEAD_SOURCES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    <datalist id="lead-source-modal-options">
+                      <option value="Instagram" />
+                      <option value="Google Maps" />
+                      <option value="Walk-in" />
+                      <option value="Referral" />
+                      <option value="Meta Ads" />
+                      <option value="WhatsApp" />
+                      <option value="Printo Referral" />
+                      <option value="Event / Expo" />
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-xs text-muted mb-1">Interested Product / Service</label>

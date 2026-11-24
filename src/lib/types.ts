@@ -5,7 +5,7 @@
 
 export type ProductCategory = 'card' | 'service'
 
-export type LeadSource = 'instagram' | 'google_maps' | 'referral' | 'meta_ad' | 'walk_in' | 'other'
+export type LeadSource = 'instagram' | 'google_maps' | 'referral' | 'meta_ad' | 'walk_in' | 'other' | (string & {})
 
 export type LeadStage =
   | 'New'
