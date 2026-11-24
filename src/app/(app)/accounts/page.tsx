@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
-import { Transaction, TransactionType, ExpenseCategory, EXPENSE_CATEGORIES, OrderStatus } from '@/lib/types'
+import { Transaction, TransactionType, ExpenseCategory, EXPENSE_CATEGORIES } from '@/lib/types'
 import { formatINR, formatDate } from '@/lib/utils'
 import {
   getTransactions,
@@ -35,6 +35,12 @@ export default function AccountsPage() {
     pendingReceivables: number
     orderCashInflow: number
     directIncome: number
+    bankInflow: number
+    cashInflow: number
+    bankExpenses: number
+    cashExpenses: number
+    bankBalance: number
+    cashBalance: number
     categoryBreakdown: Record<string, number>
     salesOrders: SalesSummaryItem[]
   }>({
@@ -46,6 +52,12 @@ export default function AccountsPage() {
     pendingReceivables: 0,
     orderCashInflow: 0,
     directIncome: 0,
+    bankInflow: 0,
+    cashInflow: 0,
+    bankExpenses: 0,
+    cashExpenses: 0,
+    bankBalance: 0,
+    cashBalance: 0,
     categoryBreakdown: {},
     salesOrders: [],
   })
@@ -58,6 +70,7 @@ export default function AccountsPage() {
   // Filters
   const [typeFilter, setTypeFilter] = useState('ALL')
   const [categoryFilter, setCategoryFilter] = useState('ALL')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<'ALL' | 'bank' | 'cash'>('ALL')
   const [salesStatusFilter, setSalesStatusFilter] = useState('ALL')
   const [search, setSearch] = useState('')
 
@@ -68,7 +81,7 @@ export default function AccountsPage() {
   const [formCategory, setFormCategory] = useState<ExpenseCategory>('printo')
   const [formAmount, setFormAmount] = useState<number | ''>('')
   const [formDate, setFormDate] = useState<string>(new Date().toISOString().split('T')[0])
-  const [formMethod, setFormMethod] = useState<'upi' | 'bank' | 'cash'>('upi')
+  const [formMethod, setFormMethod] = useState<'upi' | 'bank' | 'cash'>('bank')
   const [formDesc, setFormDesc] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -81,6 +94,7 @@ export default function AccountsPage() {
         getTransactions({
           type: typeFilter,
           category: categoryFilter,
+          payment_method: paymentMethodFilter,
           search,
         }),
         getFinancialSummary(),
@@ -95,7 +109,7 @@ export default function AccountsPage() {
 
   useEffect(() => {
     loadData()
-  }, [typeFilter, categoryFilter])
+  }, [typeFilter, categoryFilter, paymentMethodFilter])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -114,7 +128,7 @@ export default function AccountsPage() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [typeFilter, categoryFilter, search])
+  }, [typeFilter, categoryFilter, paymentMethodFilter, search])
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -127,7 +141,7 @@ export default function AccountsPage() {
     setFormCategory('printo')
     setFormAmount('')
     setFormDate(new Date().toISOString().split('T')[0])
-    setFormMethod('upi')
+    setFormMethod('bank')
     setFormDesc('')
     setErrorMsg('')
     setShowModal(true)
@@ -203,10 +217,15 @@ export default function AccountsPage() {
     return found ? found.label : catId
   }
 
-  // Filter Sales Orders by search query & status
+  // Filter Sales Orders by search query, status, and bank vs cash
   const filteredSales = summary.salesOrders.filter((s) => {
     if (salesStatusFilter !== 'ALL' && s.status !== salesStatusFilter) {
       return false
+    }
+    if (paymentMethodFilter !== 'ALL') {
+      const isCash = s.payment_method === 'cash'
+      if (paymentMethodFilter === 'cash' && !isCash) return false
+      if (paymentMethodFilter === 'bank' && isCash) return false
     }
     if (!search.trim()) return true
     const q = search.trim().toLowerCase()
@@ -222,7 +241,7 @@ export default function AccountsPage() {
     <>
       <Header title="Accounts & Sales" />
       <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-        {/* Metric Cards - Includes Sales prominently */}
+        {/* Metric Cards - Overview */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Total Sales */}
           <div className="p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors">
@@ -266,7 +285,7 @@ export default function AccountsPage() {
             >
               {formatINR(summary.netCashFlow)}
             </span>
-            <span className="text-[10px] text-muted block mt-1">Inflow - Expenses</span>
+            <span className="text-[10px] text-muted block mt-1">Total in Bank + Cash</span>
           </div>
 
           {/* Pending Receivables */}
@@ -276,6 +295,61 @@ export default function AccountsPage() {
               {formatINR(summary.pendingReceivables)}
             </span>
             <span className="text-[10px] text-muted block mt-1">Uncollected order balances</span>
+          </div>
+        </div>
+
+        {/* Bank Account vs Cash in Hand Option Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Bank Account Option Card */}
+          <div
+            onClick={() => setPaymentMethodFilter(paymentMethodFilter === 'bank' ? 'ALL' : 'bank')}
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethodFilter === 'bank'
+                ? 'bg-blue-950/30 border-blue-400 ring-1 ring-blue-400'
+                : 'bg-card border-border hover:border-blue-500/40'
+              }`}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span>🏛️</span> Bank Account (UPI / Bank Transfer)
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-950/80 text-blue-300 border border-blue-800/50">
+                {paymentMethodFilter === 'bank' ? 'Filtered ✓' : 'Click to filter'}
+              </span>
+            </div>
+            <div className="mt-2.5 flex items-baseline justify-between">
+              <span className={`text-2xl font-black font-mono ${summary.bankBalance >= 0 ? 'text-blue-400' : 'text-danger'}`}>
+                {formatINR(summary.bankBalance)}
+              </span>
+              <span className="text-xs text-muted font-medium">
+                In: <span className="text-foreground font-mono">{formatINR(summary.bankInflow)}</span> · Out: <span className="text-danger font-mono">{formatINR(summary.bankExpenses)}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Cash in Hand Option Card */}
+          <div
+            onClick={() => setPaymentMethodFilter(paymentMethodFilter === 'cash' ? 'ALL' : 'cash')}
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethodFilter === 'cash'
+                ? 'bg-amber-950/30 border-amber-400 ring-1 ring-amber-400'
+                : 'bg-card border-border hover:border-amber-500/40'
+              }`}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span>💵</span> Cash in Hand (Physical Cash)
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50">
+                {paymentMethodFilter === 'cash' ? 'Filtered ✓' : 'Click to filter'}
+              </span>
+            </div>
+            <div className="mt-2.5 flex items-baseline justify-between">
+              <span className={`text-2xl font-black font-mono ${summary.cashBalance >= 0 ? 'text-amber-400' : 'text-danger'}`}>
+                {formatINR(summary.cashBalance)}
+              </span>
+              <span className="text-xs text-muted font-medium">
+                In: <span className="text-foreground font-mono">{formatINR(summary.cashInflow)}</span> · Out: <span className="text-danger font-mono">{formatINR(summary.cashExpenses)}</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -305,7 +379,7 @@ export default function AccountsPage() {
             className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${mainTab === 'sales' ? 'bg-lime text-black shadow' : 'text-muted hover:text-foreground'
               }`}
           >
-            <span>🛒</span> Sales & Invoices ({summary.salesOrders.length})
+            <span>🛒</span> Sales & Invoices ({filteredSales.length})
           </button>
           <button
             onClick={() => setMainTab('transactions')}
@@ -316,57 +390,91 @@ export default function AccountsPage() {
           </button>
         </div>
 
-        {/* Search & Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
-          <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-            <input
-              type="text"
-              placeholder={mainTab === 'sales' ? 'Search sales by customer, order no, or item...' : 'Search expenses or income...'}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 px-4 py-2 rounded-lg bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-lime"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover font-medium"
-            >
-              Search
-            </button>
-          </form>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => loadData(true)}
-              disabled={refreshing}
-              className="px-3 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground flex items-center justify-center"
-              title="Sync with cloud"
-            >
-              <span className={`inline-block text-xs ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
-            </button>
-
-            {mainTab === 'sales' ? (
-              <Link
-                href="/orders/new"
-                className="flex-1 sm:flex-none px-4 py-2.5 bg-lime text-black hover:bg-lime-dark text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"
+        {/* Search, Filter Pills & Actions Bar */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
+            <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+              <input
+                type="text"
+                placeholder={mainTab === 'sales' ? 'Search sales by customer, order no, or item...' : 'Search expenses or income...'}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 px-4 py-2 rounded-lg bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-lime"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover font-medium"
               >
-                <span>+</span> New Sale / Order
-              </Link>
-            ) : (
-              <>
-                <button
-                  onClick={() => handleOpenAdd('expense')}
-                  className="flex-1 sm:flex-none px-4 py-2.5 bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"
-                >
-                  <span>-</span> Add Expense
-                </button>
-                <button
-                  onClick={() => handleOpenAdd('income')}
+                Search
+              </button>
+            </form>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => loadData(true)}
+                disabled={refreshing}
+                className="px-3 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground flex items-center justify-center"
+                title="Sync with cloud"
+              >
+                <span className={`inline-block text-xs ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
+              </button>
+
+              {mainTab === 'sales' ? (
+                <Link
+                  href="/orders/new"
                   className="flex-1 sm:flex-none px-4 py-2.5 bg-lime text-black hover:bg-lime-dark text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"
                 >
-                  <span>+</span> Add Income
-                </button>
-              </>
-            )}
+                  <span>+</span> New Sale / Order
+                </Link>
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleOpenAdd('expense')}
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"
+                  >
+                    <span>-</span> Add Expense
+                  </button>
+                  <button
+                    onClick={() => handleOpenAdd('income')}
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-lime text-black hover:bg-lime-dark text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"
+                  >
+                    <span>+</span> Add Income
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Account Filter Pills (Bank vs Cash vs All) */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-muted text-[11px] font-medium mr-1">Account Filter:</span>
+            <button
+              onClick={() => setPaymentMethodFilter('ALL')}
+              className={`px-3 py-1 rounded-lg font-medium transition-colors ${paymentMethodFilter === 'ALL'
+                  ? 'bg-lime text-black font-semibold'
+                  : 'bg-card border border-border text-muted hover:text-foreground'
+                }`}
+            >
+              All Accounts
+            </button>
+            <button
+              onClick={() => setPaymentMethodFilter('bank')}
+              className={`px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors ${paymentMethodFilter === 'bank'
+                  ? 'bg-blue-600 text-white font-semibold'
+                  : 'bg-card border border-border text-blue-300 hover:text-foreground'
+                }`}
+            >
+              <span>🏛️</span> Bank / UPI
+            </button>
+            <button
+              onClick={() => setPaymentMethodFilter('cash')}
+              className={`px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors ${paymentMethodFilter === 'cash'
+                  ? 'bg-amber-600 text-white font-semibold'
+                  : 'bg-card border border-border text-amber-300 hover:text-foreground'
+                }`}
+            >
+              <span>💵</span> Cash in Hand
+            </button>
           </div>
         </div>
 
@@ -398,7 +506,7 @@ export default function AccountsPage() {
               <div className="text-center py-8 text-muted text-xs">Loading sales...</div>
             ) : filteredSales.length === 0 ? (
               <div className="text-center py-12 text-muted text-xs space-y-2">
-                <p>No sales found.</p>
+                <p>No sales found for the selected filter.</p>
                 <Link
                   href="/orders/new"
                   className="inline-block mt-2 px-3 py-1.5 bg-lime text-black font-semibold rounded-lg hover:bg-lime-dark text-xs"
@@ -414,10 +522,11 @@ export default function AccountsPage() {
                       <th className="pb-2 font-medium">Order No</th>
                       <th className="pb-2 font-medium">Date</th>
                       <th className="pb-2 font-medium">Customer</th>
+                      <th className="pb-2 font-medium">Account</th>
                       <th className="pb-2 font-medium">Items</th>
                       <th className="pb-2 font-medium text-center">Status</th>
                       <th className="pb-2 font-medium text-right">Bill Total</th>
-                      <th className="pb-2 font-medium text-right">Advance Paid</th>
+                      <th className="pb-2 font-medium text-right">Advance</th>
                       <th className="pb-2 font-medium text-right">Balance Due</th>
                       <th className="pb-2 font-medium text-center">Actions</th>
                     </tr>
@@ -437,7 +546,18 @@ export default function AccountsPage() {
                             <div className="text-[10px] text-muted">{s.customer_business}</div>
                           )}
                         </td>
-                        <td className="py-3 text-muted max-w-[200px] truncate" title={s.items_summary}>
+                        <td className="py-3 whitespace-nowrap">
+                          {s.payment_method === 'cash' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-950/60 text-amber-300 border border-amber-800/40">
+                              💵 Cash
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-950/60 text-blue-300 border border-blue-800/40">
+                              🏛️ Bank/UPI
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 text-muted max-w-[180px] truncate" title={s.items_summary}>
                           {s.items_summary}
                         </td>
                         <td className="py-3 text-center">
@@ -534,7 +654,7 @@ export default function AccountsPage() {
             {/* Transactions Table */}
             <div className="bg-card border border-border rounded-xl p-4 md:p-5 space-y-3">
               <h2 className="text-sm font-semibold text-lime uppercase tracking-wider">
-                Cash Transactions Ledger ({transactions.length})
+                Cash & Bank Transactions Ledger ({transactions.length})
               </h2>
 
               {loading ? (
@@ -551,7 +671,7 @@ export default function AccountsPage() {
                         <th className="pb-2 font-medium">Date</th>
                         <th className="pb-2 font-medium">Description</th>
                         <th className="pb-2 font-medium">Category</th>
-                        <th className="pb-2 font-medium text-center">Method</th>
+                        <th className="pb-2 font-medium text-center">Account / Method</th>
                         <th className="pb-2 font-medium text-right">Amount</th>
                         <th className="pb-2 font-medium text-center w-10"></th>
                       </tr>
@@ -566,8 +686,16 @@ export default function AccountsPage() {
                               {getCategoryLabel(tx.category)}
                             </span>
                           </td>
-                          <td className="py-3 text-center uppercase font-mono text-muted text-[10px]">
-                            {tx.payment_method}
+                          <td className="py-3 text-center whitespace-nowrap">
+                            {tx.payment_method === 'cash' ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-950/60 text-amber-300 border border-amber-800/40">
+                                💵 Cash
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-950/60 text-blue-300 border border-blue-800/40">
+                                🏛️ Bank / UPI
+                              </span>
+                            )}
                           </td>
                           <td
                             className={`py-3 text-right font-bold font-mono text-sm ${tx.type === 'expense' ? 'text-danger' : 'text-lime'
@@ -658,6 +786,33 @@ export default function AccountsPage() {
                   />
                 </div>
 
+                {/* Account / Payment Method Selector (Bank vs Cash) */}
+                <div>
+                  <label className="block text-xs text-muted mb-1">Paid Through / Deposited To *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormMethod('bank')}
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${formMethod === 'bank' || formMethod === 'upi'
+                          ? 'bg-blue-950/60 border-blue-400 text-blue-300 ring-1 ring-blue-400'
+                          : 'bg-black border-border text-muted hover:text-foreground'
+                        }`}
+                    >
+                      <span>🏛️</span> Bank / UPI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormMethod('cash')}
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${formMethod === 'cash'
+                          ? 'bg-amber-950/60 border-amber-400 text-amber-300 ring-1 ring-amber-400'
+                          : 'bg-black border-border text-muted hover:text-foreground'
+                        }`}
+                    >
+                      <span>💵</span> Cash in Hand
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs text-muted mb-1">Category</label>
                   <select
@@ -673,29 +828,14 @@ export default function AccountsPage() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-muted mb-1">Date</label>
-                    <input
-                      type="date"
-                      value={formDate}
-                      onChange={(e) => setFormDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-lime"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-muted mb-1">Payment Method</label>
-                    <select
-                      value={formMethod}
-                      onChange={(e) => setFormMethod(e.target.value as 'upi' | 'bank' | 'cash')}
-                      className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-lime"
-                    >
-                      <option value="upi">UPI</option>
-                      <option value="bank">Bank Transfer</option>
-                      <option value="cash">Cash</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={formDate}
+                    onChange={(e) => setFormDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-lime"
+                  />
                 </div>
 
                 <div>

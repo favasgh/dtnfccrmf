@@ -36,6 +36,7 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
   const [status, setStatus] = useState<OrderStatus>('Awaiting Advance')
   const [deliveryDate, setDeliveryDate] = useState('')
   const [balanceReceived, setBalanceReceived] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'bank' | 'cash' | 'upi'>('bank')
   const [linkConfirmed, setLinkConfirmed] = useState(false)
   const [advanceAmount, setAdvanceAmount] = useState<number | ''>('')
   const [advanceDate, setAdvanceDate] = useState('')
@@ -65,6 +66,7 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
         setStatus(o.status)
         setDeliveryDate(o.delivery_date || '')
         setBalanceReceived(Boolean(o.balance_received))
+        setPaymentMethod(o.payment_method || 'bank')
         setLinkConfirmed(Boolean(o.link_confirmed))
         setAdvanceAmount(o.advance_amount ? o.advance_amount : '')
         setAdvanceDate(o.advance_date || '')
@@ -166,6 +168,7 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
         delivery_charge: Number(deliveryCharge) || 0,
         delivery_date: deliveryDate || null,
         balance_received: balanceReceived,
+        payment_method: paymentMethod,
         link_confirmed: linkConfirmed,
         notes: notes.trim() || null,
         items: items.map((it) => ({
@@ -458,6 +461,34 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
                   placeholder="0"
                   className="w-full px-3 py-2 bg-black border border-border rounded-lg text-sm text-foreground focus:ring-1 focus:ring-lime"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs text-muted mb-1">Payment Method / Account</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('bank')}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
+                      paymentMethod === 'bank' || paymentMethod === 'upi'
+                        ? 'bg-lime/20 border-lime text-lime'
+                        : 'bg-black border-border text-muted hover:border-border/80'
+                    }`}
+                  >
+                    <span>🏛️</span> Bank / UPI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
+                      paymentMethod === 'cash'
+                        ? 'bg-amber-400/20 border-amber-400 text-amber-400'
+                        : 'bg-black border-border text-muted hover:border-border/80'
+                    }`}
+                  >
+                    <span>💵</span> Cash in Hand
+                  </button>
+                </div>
               </div>
 
               {advanceAmount !== '' && Number(advanceAmount) > 0 && (

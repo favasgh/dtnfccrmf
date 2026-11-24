@@ -7,6 +7,7 @@ import { readDB, writeDB } from '@/lib/db'
 export async function getTransactions(filters?: {
   type?: string
   category?: string
+  payment_method?: string
   search?: string
 }): Promise<Transaction[]> {
   const db = await readDB()
@@ -18,6 +19,14 @@ export async function getTransactions(filters?: {
 
   if (filters?.category && filters.category !== 'ALL') {
     list = list.filter((t) => t.category === filters.category)
+  }
+
+  if (filters?.payment_method && filters.payment_method !== 'ALL') {
+    if (filters.payment_method === 'bank') {
+      list = list.filter((t) => t.payment_method === 'bank' || t.payment_method === 'upi')
+    } else {
+      list = list.filter((t) => t.payment_method === filters.payment_method)
+    }
   }
 
   if (filters?.search?.trim()) {
@@ -118,6 +127,7 @@ export interface SalesSummaryItem {
   customer_business?: string
   order_date: string
   status: string
+  payment_method: 'bank' | 'cash' | 'upi'
   total_amount: number
   advance_amount: number
   balance_due: number
@@ -132,6 +142,12 @@ export async function getFinancialSummary() {
   let totalOrdersCount = 0
   let orderCashInflow = 0
   let pendingReceivables = 0
+
+  let bankInflow = 0
+  let cashInflow = 0
+  let bankExpenses = 0
+  let cashExpenses = 0
+
   const salesOrders: SalesSummaryItem[] = []
 
   db.orders.forEach((o) => {
@@ -146,11 +162,18 @@ export async function getFinancialSummary() {
     totalSales += grandTotal
     totalOrdersCount += 1
 
-    if (isClosedOrReceived) {
-      orderCashInflow += grandTotal
-    } else {
-      orderCashInflow += advance
+    const collectedFromOrder = isClosedOrReceived ? grandTotal : advance
+    orderCashInflow += collectedFromOrder
+
+    if (!isClosedOrReceived) {
       pendingReceivables += balance
+    }
+
+    const payMethod: 'bank' | 'cash' | 'upi' = o.payment_method || 'bank'
+    if (payMethod === 'cash') {
+      cashInflow += collectedFromOrder
+    } else {
+      bankInflow += collectedFromOrder
     }
 
     const cust = db.customers.find((c) => c.id === o.customer_id)
@@ -163,6 +186,7 @@ export async function getFinancialSummary() {
       customer_business: cust?.business_name || undefined,
       order_date: o.order_date,
       status: o.status,
+      payment_method: payMethod,
       total_amount: grandTotal,
       advance_amount: advance,
       balance_due: balance,
@@ -176,15 +200,32 @@ export async function getFinancialSummary() {
 
   // 2. Direct transactions
   const txs = db.transactions || []
-  const directIncome = txs
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
-  const totalExpenses = txs
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+  let directIncome = 0
+  let totalExpenses = 0
+
+  txs.forEach((t) => {
+    if (t.type === 'income') {
+      directIncome += t.amount
+      if (t.payment_method === 'cash') {
+        cashInflow += t.amount
+      } else {
+        bankInflow += t.amount
+      }
+    } else if (t.type === 'expense') {
+      totalExpenses += t.amount
+      if (t.payment_method === 'cash') {
+        cashExpenses += t.amount
+      } else {
+        bankExpenses += t.amount
+      }
+    }
+  })
 
   const totalInflow = orderCashInflow + directIncome
   const netCashFlow = totalInflow - totalExpenses
+
+  const bankBalance = bankInflow - bankExpenses
+  const cashBalance = cashInflow - cashExpenses
 
   // Category breakdown for expenses
   const categoryBreakdown: Record<string, number> = {}
@@ -201,6 +242,12 @@ export async function getFinancialSummary() {
     totalExpenses,
     netCashFlow,
     pendingReceivables,
+    bankInflow,
+    cashInflow,
+    bankExpenses,
+    cashExpenses,
+    bankBalance,
+    cashBalance,
     categoryBreakdown,
     salesOrders,
   }

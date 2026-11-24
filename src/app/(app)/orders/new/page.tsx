@@ -30,6 +30,7 @@ function NewOrderContent() {
   const [customerId, setCustomerId] = useState(preselectedCustomerId)
   const [advanceAmount, setAdvanceAmount] = useState<number | ''>('')
   const [advanceDate, setAdvanceDate] = useState<string>(new Date().toISOString().split('T')[0])
+  const [paymentMethod, setPaymentMethod] = useState<'bank' | 'cash'>('bank')
   const [deliveryCharge, setDeliveryCharge] = useState<number | ''>('')
   const [discount, setDiscount] = useState<number | ''>('')
   const [linkConfirmed, setLinkConfirmed] = useState<boolean>(false)
@@ -183,6 +184,7 @@ function NewOrderContent() {
           customer_id: customerId,
           advance_amount: Number(advanceAmount) || 0,
           advance_date: Number(advanceAmount) > 0 ? advanceDate : undefined,
+          payment_method: paymentMethod,
           discount: discountVal,
           delivery_charge: deliveryVal,
           link_confirmed: linkConfirmed,
@@ -371,6 +373,34 @@ function NewOrderContent() {
               <p className="text-[10px] text-muted mt-1">
                 {advanceAmount !== '' && Number(advanceAmount) > 0 ? 'Status will start at "In Progress"' : 'Status will start at "Awaiting Advance"'}
               </p>
+            </div>
+
+            <div>
+              <label className="block text-xs text-muted mb-1">Payment Method / Account</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('bank')}
+                  className={`px-3 py-2 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
+                    paymentMethod === 'bank'
+                      ? 'bg-lime/20 border-lime text-lime'
+                      : 'bg-black border-border text-muted hover:border-border/80'
+                  }`}
+                >
+                  <span>🏛️</span> Bank / UPI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('cash')}
+                  className={`px-3 py-2 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
+                    paymentMethod === 'cash'
+                      ? 'bg-amber-400/20 border-amber-400 text-amber-400'
+                      : 'bg-black border-border text-muted hover:border-border/80'
+                  }`}
+                >
+                  <span>💵</span> Cash in Hand
+                </button>
+              </div>
             </div>
 
             {advanceAmount !== '' && Number(advanceAmount) > 0 && (

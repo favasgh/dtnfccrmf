@@ -90,6 +90,7 @@ export async function createOrder(
     customer_id: string
     advance_amount: number
     advance_date?: string
+    payment_method?: 'bank' | 'cash' | 'upi'
     discount?: number
     delivery_charge: number
     link_confirmed: boolean
@@ -128,6 +129,7 @@ export async function createOrder(
     encoding_done: false,
     profile_ready: false,
     delivery_date: null,
+    payment_method: orderData.payment_method || 'bank',
     balance_received: false,
     link_confirmed: orderData.link_confirmed,
     notes: orderData.notes || null,
@@ -212,6 +214,7 @@ export async function updateCompleteOrder(
     discount?: number
     delivery_charge?: number
     delivery_date?: string | null
+    payment_method?: 'bank' | 'cash' | 'upi'
     balance_received?: boolean
     link_confirmed?: boolean
     notes?: string | null
@@ -264,6 +267,7 @@ export async function updateCompleteOrder(
     discount: data.discount !== undefined ? Number(data.discount) || 0 : current.discount || 0,
     delivery_charge: data.delivery_charge !== undefined ? Number(data.delivery_charge) || 0 : current.delivery_charge,
     delivery_date: data.delivery_date !== undefined ? data.delivery_date : current.delivery_date,
+    payment_method: data.payment_method !== undefined ? data.payment_method : (current.payment_method || 'bank'),
     balance_received: balanceReceived,
     link_confirmed: data.link_confirmed !== undefined ? data.link_confirmed : current.link_confirmed,
     notes: data.notes !== undefined ? (data.notes ? data.notes.trim() : null) : current.notes,

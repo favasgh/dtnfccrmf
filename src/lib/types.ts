@@ -101,6 +101,7 @@ export interface Order {
   encoding_done: boolean
   profile_ready: boolean
   delivery_date: string | null
+  payment_method?: 'bank' | 'cash' | 'upi'
   balance_received: boolean
   link_confirmed: boolean
   notes: string | null
