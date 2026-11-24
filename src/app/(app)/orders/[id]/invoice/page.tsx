@@ -113,22 +113,20 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
           <div className="bg-card border border-border rounded-lg p-0.5 flex items-center text-xs">
             <button
               onClick={() => handleSwitchPayment('bank')}
-              className={`px-2.5 py-1 sm:py-1.5 rounded-md font-semibold text-xs flex items-center gap-1 transition-colors ${
-                order.payment_method !== 'cash'
+              className={`px-2.5 py-1 sm:py-1.5 rounded-md font-semibold text-xs flex items-center gap-1 transition-colors ${order.payment_method !== 'cash'
                   ? 'bg-lime text-black shadow-sm'
                   : 'text-muted hover:text-foreground'
-              }`}
+                }`}
               title="Set payment mode to Bank / UPI"
             >
               <span>🏛️</span> Bank / UPI
             </button>
             <button
               onClick={() => handleSwitchPayment('cash')}
-              className={`px-2.5 py-1 sm:py-1.5 rounded-md font-semibold text-xs flex items-center gap-1 transition-colors ${
-                order.payment_method === 'cash'
+              className={`px-2.5 py-1 sm:py-1.5 rounded-md font-semibold text-xs flex items-center gap-1 transition-colors ${order.payment_method === 'cash'
                   ? 'bg-amber-400 text-black shadow-sm'
                   : 'text-muted hover:text-foreground'
-              }`}
+                }`}
               title="Set payment mode to Cash in Hand"
             >
               <span>💵</span> Cash
