@@ -261,9 +261,8 @@ export default function AccountsPage() {
               <span>💳</span> Net Cash Balance
             </span>
             <span
-              className={`text-2xl font-bold font-mono block mt-1 ${
-                summary.netCashFlow >= 0 ? 'text-lime' : 'text-danger'
-              }`}
+              className={`text-2xl font-bold font-mono block mt-1 ${summary.netCashFlow >= 0 ? 'text-lime' : 'text-danger'
+                }`}
             >
               {formatINR(summary.netCashFlow)}
             </span>
@@ -303,17 +302,15 @@ export default function AccountsPage() {
         <div className="flex bg-card border border-border rounded-xl p-1 gap-1">
           <button
             onClick={() => setMainTab('sales')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-              mainTab === 'sales' ? 'bg-lime text-black shadow' : 'text-muted hover:text-foreground'
-            }`}
+            className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${mainTab === 'sales' ? 'bg-lime text-black shadow' : 'text-muted hover:text-foreground'
+              }`}
           >
             <span>🛒</span> Sales & Invoices ({summary.salesOrders.length})
           </button>
           <button
             onClick={() => setMainTab('transactions')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-              mainTab === 'transactions' ? 'bg-lime text-black shadow' : 'text-muted hover:text-foreground'
-            }`}
+            className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${mainTab === 'transactions' ? 'bg-lime text-black shadow' : 'text-muted hover:text-foreground'
+              }`}
           >
             <span>💸</span> Expenses & Other Cash ({transactions.length})
           </button>
@@ -386,11 +383,10 @@ export default function AccountsPage() {
                   <button
                     key={st}
                     onClick={() => setSalesStatusFilter(st)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                      salesStatusFilter === st
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${salesStatusFilter === st
                         ? 'bg-lime text-black font-semibold'
                         : 'bg-black/60 border border-border text-muted hover:text-foreground'
-                    }`}
+                      }`}
                   >
                     {st === 'ALL' ? 'All Statuses' : st}
                   </button>
@@ -446,9 +442,8 @@ export default function AccountsPage() {
                         </td>
                         <td className="py-3 text-center">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                              STATUS_COLORS[s.status] || 'bg-card border-border'
-                            }`}
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_COLORS[s.status] || 'bg-card border-border'
+                              }`}
                           >
                             {s.status}
                           </span>
@@ -501,25 +496,22 @@ export default function AccountsPage() {
               <div className="flex bg-card border border-border rounded-lg p-1">
                 <button
                   onClick={() => setTypeFilter('ALL')}
-                  className={`px-3 py-1 rounded font-medium ${
-                    typeFilter === 'ALL' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
-                  }`}
+                  className={`px-3 py-1 rounded font-medium ${typeFilter === 'ALL' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
+                    }`}
                 >
                   All Types
                 </button>
                 <button
                   onClick={() => setTypeFilter('expense')}
-                  className={`px-3 py-1 rounded font-medium ${
-                    typeFilter === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
-                  }`}
+                  className={`px-3 py-1 rounded font-medium ${typeFilter === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
+                    }`}
                 >
                   Expenses
                 </button>
                 <button
                   onClick={() => setTypeFilter('income')}
-                  className={`px-3 py-1 rounded font-medium ${
-                    typeFilter === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
-                  }`}
+                  className={`px-3 py-1 rounded font-medium ${typeFilter === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
+                    }`}
                 >
                   Other Income
                 </button>
@@ -578,9 +570,8 @@ export default function AccountsPage() {
                             {tx.payment_method}
                           </td>
                           <td
-                            className={`py-3 text-right font-bold font-mono text-sm ${
-                              tx.type === 'expense' ? 'text-danger' : 'text-lime'
-                            }`}
+                            className={`py-3 text-right font-bold font-mono text-sm ${tx.type === 'expense' ? 'text-danger' : 'text-lime'
+                              }`}
                           >
                             {tx.type === 'expense' ? '-' : '+'}
                             {formatINR(tx.amount)}
@@ -639,18 +630,16 @@ export default function AccountsPage() {
                   <button
                     type="button"
                     onClick={() => setFormType('expense')}
-                    className={`py-1.5 text-xs font-semibold rounded ${
-                      formType === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
-                    }`}
+                    className={`py-1.5 text-xs font-semibold rounded ${formType === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
+                      }`}
                   >
                     Expense (-)
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormType('income')}
-                    className={`py-1.5 text-xs font-semibold rounded ${
-                      formType === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
-                    }`}
+                    className={`py-1.5 text-xs font-semibold rounded ${formType === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
+                      }`}
                   >
                     Income (+)
                   </button>
