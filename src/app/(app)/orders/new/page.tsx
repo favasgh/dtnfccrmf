@@ -28,9 +28,9 @@ function NewOrderContent() {
 
   // Form State
   const [customerId, setCustomerId] = useState(preselectedCustomerId)
-  const [advanceAmount, setAdvanceAmount] = useState<number>(0)
+  const [advanceAmount, setAdvanceAmount] = useState<number | ''>('')
   const [advanceDate, setAdvanceDate] = useState<string>(new Date().toISOString().split('T')[0])
-  const [deliveryCharge, setDeliveryCharge] = useState<number>(0)
+  const [deliveryCharge, setDeliveryCharge] = useState<number | ''>('')
   const [linkConfirmed, setLinkConfirmed] = useState<boolean>(false)
   const [notes, setNotes] = useState<string>('')
   const [items, setItems] = useState<ItemDraft[]>([
@@ -179,7 +179,7 @@ function NewOrderContent() {
         {
           customer_id: customerId,
           advance_amount: Number(advanceAmount) || 0,
-          advance_date: advanceAmount > 0 ? advanceDate : undefined,
+          advance_date: Number(advanceAmount) > 0 ? advanceDate : undefined,
           delivery_charge: Number(deliveryCharge) || 0,
           link_confirmed: linkConfirmed,
           notes: notes.trim() || undefined,
@@ -329,9 +329,9 @@ function NewOrderContent() {
                       type="number"
                       min={0}
                       required
-                      value={it.unit_price}
-                      onChange={(e) => handleItemChange(idx, 'unit_price', Number(e.target.value))}
-                      placeholder="Unit Price"
+                      value={it.unit_price === 0 ? '' : it.unit_price}
+                      onChange={(e) => handleItemChange(idx, 'unit_price', e.target.value === '' ? 0 : Number(e.target.value))}
+                      placeholder="0"
                       className="w-full px-2 py-1.5 bg-black border border-border rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
                     />
                   </div>
@@ -360,15 +360,16 @@ function NewOrderContent() {
                 type="number"
                 min={0}
                 value={advanceAmount}
-                onChange={(e) => setAdvanceAmount(Number(e.target.value))}
+                onChange={(e) => setAdvanceAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="0"
                 className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-lime"
               />
               <p className="text-[10px] text-muted mt-1">
-                {advanceAmount > 0 ? 'Status will start at "In Progress"' : 'Status will start at "Awaiting Advance"'}
+                {advanceAmount !== '' && Number(advanceAmount) > 0 ? 'Status will start at "In Progress"' : 'Status will start at "Awaiting Advance"'}
               </p>
             </div>
 
-            {advanceAmount > 0 && (
+            {advanceAmount !== '' && Number(advanceAmount) > 0 && (
               <div>
                 <label className="block text-xs text-muted mb-1">Advance Received Date</label>
                 <input
@@ -388,7 +389,8 @@ function NewOrderContent() {
                 type="number"
                 min={0}
                 value={deliveryCharge}
-                onChange={(e) => setDeliveryCharge(Number(e.target.value))}
+                onChange={(e) => setDeliveryCharge(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="0"
                 className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-lime"
               />
               <p className="text-[10px] text-muted mt-1">Charged at actual cost, kept separate.</p>
@@ -403,7 +405,7 @@ function NewOrderContent() {
             </div>
             <div className="flex justify-between text-muted">
               <span>Delivery Charge:</span>
-              <span className="text-foreground">{formatINR(deliveryCharge)}</span>
+              <span className="text-foreground">{formatINR(Number(deliveryCharge) || 0)}</span>
             </div>
             <div className="flex justify-between font-semibold text-foreground pt-1 border-t border-border/60">
               <span>Grand Total:</span>
@@ -411,7 +413,7 @@ function NewOrderContent() {
             </div>
             <div className="flex justify-between text-muted">
               <span>Advance Paid:</span>
-              <span className="text-foreground">{formatINR(advanceAmount)}</span>
+              <span className="text-foreground">{formatINR(Number(advanceAmount) || 0)}</span>
             </div>
             <div className="flex justify-between font-bold text-sm pt-1 border-t border-border">
               <span>Balance Due:</span>

@@ -30,8 +30,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [successMsg, setSuccessMsg] = useState('')
 
   // Payment & Notes editable state
-  const [advanceAmount, setAdvanceAmount] = useState<number>(0)
-  const [deliveryCharge, setDeliveryCharge] = useState<number>(0)
+  const [advanceAmount, setAdvanceAmount] = useState<number | ''>('')
+  const [deliveryCharge, setDeliveryCharge] = useState<number | ''>('')
   const [orderNotes, setOrderNotes] = useState<string>('')
   const [savingPayment, setSavingPayment] = useState(false)
   const [deletingOrder, setDeletingOrder] = useState(false)
@@ -41,14 +41,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [selectedProdId, setSelectedProdId] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [newQty, setNewQty] = useState(1)
-  const [newPrice, setNewPrice] = useState(0)
+  const [newPrice, setNewPrice] = useState<number | ''>('')
   const [addingItem, setAddingItem] = useState(false)
 
   // Edit Item State
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editDesc, setEditDesc] = useState('')
   const [editQty, setEditQty] = useState(1)
-  const [editPrice, setEditPrice] = useState(0)
+  const [editPrice, setEditPrice] = useState<number | ''>('')
   const [savingItemEdit, setSavingItemEdit] = useState(false)
 
   // Checklist updates
@@ -66,8 +66,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setCustomer(res.customer)
       setProducts(pList as Product[])
       if (res.order) {
-        setAdvanceAmount(res.order.advance_amount || 0)
-        setDeliveryCharge(res.order.delivery_charge || 0)
+        setAdvanceAmount(res.order.advance_amount ? res.order.advance_amount : '')
+        setDeliveryCharge(res.order.delivery_charge ? res.order.delivery_charge : '')
         setOrderNotes(res.order.notes || '')
       }
     } finally {
@@ -84,7 +84,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setSuccessMsg('')
 
     // Business rule check: Work starts only after advance is paid
-    if (newStatus !== 'Awaiting Advance' && newStatus !== 'Cancelled' && (order?.advance_amount || 0) <= 0) {
+    if (newStatus !== 'Awaiting Advance' && newStatus !== 'Cancelled' && (Number(advanceAmount) || order?.advance_amount || 0) <= 0) {
       setErrorMsg('⚠️ Business Rule Warning: Work cannot start and status cannot move past "Awaiting Advance" until an advance payment is recorded.')
       return
     }
@@ -116,7 +116,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     const p = products.find((x) => x.id === prodId)
     if (p) {
       setNewDesc(p.name)
-      setNewPrice(p.price)
+      setNewPrice(p.price || '')
     }
   }
 
@@ -133,7 +133,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       })
       setShowAddItem(false)
       setNewDesc('')
-      setNewPrice(0)
+      setNewPrice('')
       setNewQty(1)
       setSelectedProdId('')
       loadData()
@@ -158,7 +158,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setEditingItemId(it.id)
     setEditDesc(it.description)
     setEditQty(it.qty)
-    setEditPrice(it.unit_price)
+    setEditPrice(it.unit_price ? it.unit_price : '')
   }
 
   function handleCancelEditItem() {
@@ -389,7 +389,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                               type="number"
                               min={0}
                               value={editPrice}
-                              onChange={(e) => setEditPrice(Number(e.target.value))}
+                              onChange={(e) => setEditPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                              placeholder="0"
                               className="w-24 px-1.5 py-1 bg-black border border-lime rounded text-xs text-right text-foreground focus:outline-none"
                             />
                           </div>
@@ -491,8 +492,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   min={0}
                   required
                   value={newPrice}
-                  onChange={(e) => setNewPrice(Number(e.target.value))}
-                  placeholder="Price"
+                  onChange={(e) => setNewPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="0"
                   className="col-span-4 px-2 py-1.5 bg-card border border-border rounded text-xs text-foreground"
                 />
               </div>
@@ -544,7 +545,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       type="number"
                       min={0}
                       value={deliveryCharge}
-                      onChange={(e) => setDeliveryCharge(Number(e.target.value) || 0)}
+                      onChange={(e) => setDeliveryCharge(e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="0"
                       className="w-20 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
                     />
                   </div>
@@ -563,7 +565,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       type="number"
                       min={0}
                       value={advanceAmount}
-                      onChange={(e) => setAdvanceAmount(Number(e.target.value) || 0)}
+                      onChange={(e) => setAdvanceAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="0"
                       className="w-24 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
                     />
                   </div>
