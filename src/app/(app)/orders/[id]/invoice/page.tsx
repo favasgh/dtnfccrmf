@@ -115,13 +115,13 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
       </div>
 
       {/* Printable Exact Invoice Sheet (A4 Proportion) */}
-      <div className="max-w-[210mm] min-h-auto sm:min-h-[297mm] mx-auto bg-white text-black p-4 sm:p-10 md:p-16 shadow-2xl rounded-sm print:shadow-none print:p-6 print:m-0 flex flex-col justify-between font-sans">
+      <div className="max-w-[210mm] min-h-auto sm:min-h-[297mm] mx-auto bg-white text-black p-4 sm:p-8 md:p-10 shadow-2xl rounded-sm print:shadow-none print:p-6 print:m-0 flex flex-col justify-between font-sans">
         <div>
           {/* Top Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-6">
             {/* Left: Brand Logo & Invoice title */}
             <div>
-              <div className="w-24 sm:w-36">
+              <div className="w-14 sm:w-20">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/doubletap-logo.png"
@@ -129,56 +129,56 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
                   className="w-full h-auto object-contain"
                 />
               </div>
-              <div className="mt-4 sm:mt-8">
-                <h1 className="text-4xl sm:text-6xl font-light tracking-tight text-black">
+              <div className="mt-2 sm:mt-3">
+                <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
                   Invoice
                 </h1>
               </div>
             </div>
 
             {/* Right: Invoice details */}
-            <div className="text-left sm:text-right text-xs sm:text-base font-bold text-black space-y-1 sm:space-y-1.5 pt-0 sm:pt-14 self-stretch sm:self-auto border-t sm:border-t-0 border-gray-100 pt-2 sm:pt-0">
-              <div className="flex justify-between sm:justify-end gap-3">
-                <span className="text-black">Invoice No:</span>
+            <div className="text-left sm:text-right text-[11px] sm:text-xs font-bold text-black space-y-1 pt-0 sm:pt-6 self-stretch sm:self-auto border-t sm:border-t-0 border-gray-100 pt-2 sm:pt-0">
+              <div className="flex justify-between sm:justify-end gap-2.5">
+                <span className="text-gray-600 font-semibold">Invoice No:</span>
                 <span className="text-black font-mono">{order.order_no}</span>
               </div>
-              <div className="flex justify-between sm:justify-end gap-3">
-                <span className="text-black">Issue Date:</span>
+              <div className="flex justify-between sm:justify-end gap-2.5">
+                <span className="text-gray-600 font-semibold">Issue Date:</span>
                 <span className="text-black">{formatInvoiceDate(order.order_date)}</span>
               </div>
-              <div className="flex justify-between sm:justify-end gap-3">
-                <span className="text-black">Due Date:</span>
+              <div className="flex justify-between sm:justify-end gap-2.5">
+                <span className="text-gray-600 font-semibold">Due Date:</span>
                 <span className="text-black">{formatInvoiceDate(order.delivery_date || order.order_date)}</span>
               </div>
             </div>
           </div>
 
           {/* Main Gray Card Container */}
-          <div className="mt-6 sm:mt-10 bg-[#F4F6F8] rounded-2xl sm:rounded-[34px] p-3.5 sm:p-8 md:p-10 space-y-6 sm:space-y-8">
+          <div className="mt-4 sm:mt-6 bg-[#F4F6F8] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-4 sm:space-y-5">
             {/* Bright Fluorescent Lime Box */}
-            <div className="bg-[#BAFF00] rounded-xl sm:rounded-[22px] p-4 sm:p-7 text-black grid grid-cols-2 gap-3 sm:gap-8 shadow-sm">
+            <div className="bg-[#BAFF00] rounded-lg sm:rounded-xl p-3 sm:p-4 text-black grid grid-cols-2 gap-3 sm:gap-6 shadow-sm">
               <div>
-                <div className="text-xs sm:text-base font-bold text-black">Bill To</div>
-                <div className="text-sm sm:text-lg font-bold text-black mt-1.5 sm:mt-3 break-words">{customer.name}</div>
+                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-black/80">Bill To</div>
+                <div className="text-xs sm:text-sm font-bold text-black mt-1 break-words">{customer.name}</div>
                 {customer.business_name && (
-                  <div className="text-xs sm:text-base font-bold text-black mt-0.5 break-words">{customer.business_name}</div>
+                  <div className="text-[11px] sm:text-xs font-semibold text-black/90 mt-0.5 break-words">{customer.business_name}</div>
                 )}
                 {formattedCustPhone && (
-                  <div className="text-xs sm:text-base font-bold text-black mt-0.5">{formattedCustPhone}</div>
+                  <div className="text-[11px] sm:text-xs font-semibold text-black/90 mt-0.5">{formattedCustPhone}</div>
                 )}
               </div>
 
               <div>
-                <div className="text-xs sm:text-base font-bold text-black">From</div>
-                <div className="text-sm sm:text-lg font-bold text-black mt-1.5 sm:mt-3">{businessName}</div>
-                <div className="text-xs sm:text-base font-bold text-black mt-0.5">{businessCity}</div>
-                <div className="text-xs sm:text-base font-bold text-black mt-0.5">{businessPhone}</div>
+                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-black/80">From</div>
+                <div className="text-xs sm:text-sm font-bold text-black mt-1">{businessName}</div>
+                <div className="text-[11px] sm:text-xs font-semibold text-black/90 mt-0.5">{businessCity}</div>
+                <div className="text-[11px] sm:text-xs font-semibold text-black/90 mt-0.5">{businessPhone}</div>
               </div>
             </div>
 
             {/* Item Description Table */}
-            <div className="pt-2">
-              <div className="grid grid-cols-12 pb-2.5 sm:pb-3 font-bold text-xs sm:text-base text-black border-b border-gray-300">
+            <div className="pt-1">
+              <div className="grid grid-cols-12 pb-2 font-bold text-[10px] sm:text-xs text-black uppercase tracking-wider border-b border-gray-300">
                 <div className="col-span-5 sm:col-span-6">Item Description</div>
                 <div className="col-span-2 text-center">Qty</div>
                 <div className="col-span-2 text-right sm:text-center">
@@ -190,7 +190,7 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
 
               <div className="divide-y divide-gray-200">
                 {items.map((it) => (
-                  <div key={it.id} className="grid grid-cols-12 py-3 sm:py-4 font-bold text-xs sm:text-base text-black items-center">
+                  <div key={it.id} className="grid grid-cols-12 py-2 sm:py-2.5 font-bold text-xs sm:text-sm text-black items-center">
                     <div className="col-span-5 sm:col-span-6 pr-1 break-words">{it.description}</div>
                     <div className="col-span-2 text-center">{it.qty}</div>
                     <div className="col-span-2 text-right sm:text-center whitespace-nowrap">{formatUnitPrice(it.unit_price)}</div>
@@ -201,28 +201,28 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
               <div className="border-b border-gray-300"></div>
 
               {/* Totals Section */}
-              <div className="flex justify-end pt-4 sm:pt-6">
-                <div className="w-full sm:w-72 space-y-1.5 sm:space-y-2 text-xs sm:text-base font-bold text-black">
-                  <div className="flex justify-between items-center">
+              <div className="flex justify-end pt-3 sm:pt-4">
+                <div className="w-full sm:w-60 space-y-1 text-xs sm:text-sm font-bold text-black">
+                  <div className="flex justify-between items-center text-[11px] sm:text-xs text-gray-700">
                     <span>Subtotal:</span>
-                    <span>{formatRupees(itemsSubtotal)}</span>
+                    <span className="text-black font-bold">{formatRupees(itemsSubtotal)}</span>
                   </div>
 
                   {discountAmount > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span>Discount</span>
-                      <span>-{formatRupees(discountAmount)}</span>
+                    <div className="flex justify-between items-center text-[11px] sm:text-xs text-gray-700">
+                      <span>Discount:</span>
+                      <span className="text-black font-bold">-{formatRupees(discountAmount)}</span>
                     </div>
                   )}
 
                   {deliveryCharge > 0 && (
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center text-[11px] sm:text-xs text-gray-700">
                       <span>Delivery Charge:</span>
-                      <span>{formatRupees(deliveryCharge)}</span>
+                      <span className="text-black font-bold">{formatRupees(deliveryCharge)}</span>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center text-lg sm:text-2xl font-bold pt-3 sm:pt-4 text-black border-t border-gray-200 sm:border-t-0">
+                  <div className="flex justify-between items-center text-sm sm:text-base font-bold pt-2 text-black border-t border-gray-300">
                     <span>Grand Total:</span>
                     <span>{formatRupees(grandTotal)}</span>
                   </div>
@@ -233,7 +233,7 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
         </div>
 
         {/* Bottom Bank / Payment Details */}
-        <div className="mt-8 sm:mt-16 text-xs sm:text-base font-bold text-black leading-relaxed space-y-0.5 sm:space-y-1">
+        <div className="mt-6 sm:mt-8 text-[11px] sm:text-xs font-bold text-black leading-relaxed space-y-0.5">
           <div>Account No. :- {bankAccountNo}</div>
           <div>IFSC Code :- {bankIfsc}</div>
           <div>Name :- {bankHolderName}</div>
