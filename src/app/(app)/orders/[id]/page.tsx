@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Order, OrderItem, OrderStatus, ORDER_STATUSES, Product, Customer } from '@/lib/types'
@@ -18,8 +18,9 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   Cancelled: 'bg-red-950 text-red-300 border-red-800',
 }
 
-export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function OrderDetailPage({ params }: { params?: Promise<{ id: string }> }) {
+  const routeParams = useParams()
+  const id = (routeParams?.id as string) || ''
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [items, setItems] = useState<(OrderItem & { product?: Product })[]>([])

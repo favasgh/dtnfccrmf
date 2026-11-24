@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Customer, Order, Activity, WhatsAppTemplate } from '@/lib/types'
@@ -9,8 +9,9 @@ import { formatINR, formatDate, waLink, fillTemplate, relativeDate } from '@/lib
 import { getCustomer, updateCustomer, deleteCustomer, addCustomerActivity } from '../actions'
 import { getWhatsAppTemplates } from '../../settings/actions'
 
-export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function CustomerDetailPage({ params }: { params?: Promise<{ id: string }> }) {
+  const routeParams = useParams()
+  const id = (routeParams?.id as string) || ''
   const router = useRouter()
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [orders, setOrders] = useState<Order[]>([])

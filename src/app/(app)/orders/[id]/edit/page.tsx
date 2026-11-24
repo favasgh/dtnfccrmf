@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Order, OrderItem, OrderStatus, ORDER_STATUSES, Product, Customer } from '@/lib/types'
@@ -16,8 +16,9 @@ interface ItemDraft {
   unit_price: number | ''
 }
 
-export default function EditOrderPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function EditOrderPage({ params }: { params?: Promise<{ id: string }> }) {
+  const routeParams = useParams()
+  const id = (routeParams?.id as string) || ''
   const router = useRouter()
 
   const [order, setOrder] = useState<Order | null>(null)

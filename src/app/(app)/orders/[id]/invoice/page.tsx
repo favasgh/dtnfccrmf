@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Order, OrderItem, Customer, Settings } from '@/lib/types'
 import { getOrder } from '../../actions'
@@ -25,8 +26,9 @@ function formatUnitPrice(num: number): string {
   return `₹ ${Math.round(num || 0)}`
 }
 
-export default function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function InvoicePage({ params }: { params?: Promise<{ id: string }> }) {
+  const routeParams = useParams()
+  const id = (routeParams?.id as string) || ''
   const [order, setOrder] = useState<Order | null>(null)
   const [items, setItems] = useState<OrderItem[]>([])
   const [customer, setCustomer] = useState<Customer | null>(null)

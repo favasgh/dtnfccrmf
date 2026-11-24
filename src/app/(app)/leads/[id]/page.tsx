@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES, Activity, WhatsAppTemplate, Product } from '@/lib/types'
@@ -18,8 +18,9 @@ import {
 import { getWhatsAppTemplates } from '../../settings/actions'
 import { getProducts } from '../../products/actions'
 
-export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function LeadDetailPage({ params }: { params?: Promise<{ id: string }> }) {
+  const routeParams = useParams()
+  const id = (routeParams?.id as string) || ''
   const router = useRouter()
   const [lead, setLead] = useState<Lead | null>(null)
   const [linkedCustomerId, setLinkedCustomerId] = useState<string | null>(null)
