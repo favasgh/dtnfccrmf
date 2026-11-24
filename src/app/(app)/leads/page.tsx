@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES, Product } from '@/lib/types'
@@ -22,7 +21,6 @@ const STAGE_COLORS: Record<LeadStage, string> = {
 }
 
 export default function LeadsPage() {
-  const router = useRouter()
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -317,20 +315,6 @@ export default function LeadsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {lead.stage === 'Won' && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            router.push(`/orders/new?from_lead=${lead.id}`)
-                          }}
-                          className="px-2.5 py-1 bg-lime text-black text-[11px] font-semibold rounded-lg hover:bg-lime-dark flex items-center gap-1 shadow-sm transition-colors"
-                          title="Convert this won lead to an order with full editing"
-                        >
-                          <span>📦</span> Convert to Order
-                        </button>
-                      )}
                       <span
                         className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${STAGE_COLORS[lead.stage] || 'bg-card border-border text-foreground'
                           }`}
@@ -423,20 +407,6 @@ export default function LeadsPage() {
                           >
                             Due: {formatDate(lead.next_follow_up_date)}
                           </div>
-                        )}
-                        {lead.stage === 'Won' && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              router.push(`/orders/new?from_lead=${lead.id}`)
-                            }}
-                            className="mt-2 w-full py-1 px-2 bg-lime text-black text-[10px] font-bold rounded flex items-center justify-center gap-1 hover:bg-lime-dark"
-                            title="Convert to Order"
-                          >
-                            <span>📦</span> Convert to Order
-                          </button>
                         )}
                       </Link>
                     ))}
