@@ -270,9 +270,8 @@ export default function ProductsPage() {
     return (
       <div
         key={product.id}
-        className={`p-4 rounded-xl border transition-all ${
-          product.active ? 'bg-card border-border' : 'bg-card/50 border-border/50 opacity-60'
-        }`}
+        className={`p-4 rounded-xl border transition-all ${product.active ? 'bg-card border-border' : 'bg-card/50 border-border/50 opacity-60'
+          }`}
       >
         {!isEditing ? (
           <>
@@ -280,9 +279,8 @@ export default function ProductsPage() {
               <div>
                 <h3 className="font-semibold text-base text-foreground">{product.name}</h3>
                 <span
-                  className={`inline-block px-2 py-0.5 rounded text-[10px] mt-1 ${
-                    product.active ? 'bg-lime/20 text-lime font-medium' : 'bg-muted/20 text-muted'
-                  }`}
+                  className={`inline-block px-2 py-0.5 rounded text-[10px] mt-1 ${product.active ? 'bg-lime/20 text-lime font-medium' : 'bg-muted/20 text-muted'
+                    }`}
                 >
                   {product.active ? 'Active' : 'Inactive'}
                 </span>

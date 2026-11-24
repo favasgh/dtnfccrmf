@@ -176,9 +176,8 @@ export default function AccountsPage() {
               <span>💳</span> Net Cash Balance
             </span>
             <span
-              className={`text-2xl font-bold font-mono block mt-1 ${
-                summary.netCashFlow >= 0 ? 'text-lime' : 'text-danger'
-              }`}
+              className={`text-2xl font-bold font-mono block mt-1 ${summary.netCashFlow >= 0 ? 'text-lime' : 'text-danger'
+                }`}
             >
               {formatINR(summary.netCashFlow)}
             </span>
@@ -253,25 +252,22 @@ export default function AccountsPage() {
           <div className="flex bg-card border border-border rounded-lg p-1">
             <button
               onClick={() => setTypeFilter('ALL')}
-              className={`px-3 py-1 rounded font-medium ${
-                typeFilter === 'ALL' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
-              }`}
+              className={`px-3 py-1 rounded font-medium ${typeFilter === 'ALL' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
+                }`}
             >
               All Types
             </button>
             <button
               onClick={() => setTypeFilter('expense')}
-              className={`px-3 py-1 rounded font-medium ${
-                typeFilter === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
-              }`}
+              className={`px-3 py-1 rounded font-medium ${typeFilter === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
+                }`}
             >
               Expenses
             </button>
             <button
               onClick={() => setTypeFilter('income')}
-              className={`px-3 py-1 rounded font-medium ${
-                typeFilter === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
-              }`}
+              className={`px-3 py-1 rounded font-medium ${typeFilter === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
+                }`}
             >
               Income
             </button>
@@ -330,9 +326,8 @@ export default function AccountsPage() {
                         {tx.payment_method}
                       </td>
                       <td
-                        className={`py-3 text-right font-bold font-mono text-sm ${
-                          tx.type === 'expense' ? 'text-danger' : 'text-lime'
-                        }`}
+                        className={`py-3 text-right font-bold font-mono text-sm ${tx.type === 'expense' ? 'text-danger' : 'text-lime'
+                          }`}
                       >
                         {tx.type === 'expense' ? '-' : '+'}
                         {formatINR(tx.amount)}
@@ -389,18 +384,16 @@ export default function AccountsPage() {
                   <button
                     type="button"
                     onClick={() => setFormType('expense')}
-                    className={`py-1.5 text-xs font-semibold rounded ${
-                      formType === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
-                    }`}
+                    className={`py-1.5 text-xs font-semibold rounded ${formType === 'expense' ? 'bg-danger text-white' : 'text-muted hover:text-foreground'
+                      }`}
                   >
                     Expense (-)
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormType('income')}
-                    className={`py-1.5 text-xs font-semibold rounded ${
-                      formType === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
-                    }`}
+                    className={`py-1.5 text-xs font-semibold rounded ${formType === 'income' ? 'bg-lime text-black' : 'text-muted hover:text-foreground'
+                      }`}
                   >
                     Income (+)
                   </button>

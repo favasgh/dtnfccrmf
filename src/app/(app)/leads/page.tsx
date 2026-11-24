@@ -149,17 +149,15 @@ export default function LeadsPage() {
             <div className="bg-card border border-border rounded-lg p-1 flex">
               <button
                 onClick={() => setView('list')}
-                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${
-                  view === 'list' ? 'bg-lime text-black font-semibold' : 'text-muted hover:text-foreground'
-                }`}
+                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${view === 'list' ? 'bg-lime text-black font-semibold' : 'text-muted hover:text-foreground'
+                  }`}
               >
                 List
               </button>
               <button
                 onClick={() => setView('kanban')}
-                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${
-                  view === 'kanban' ? 'bg-lime text-black font-semibold' : 'text-muted hover:text-foreground'
-                }`}
+                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${view === 'kanban' ? 'bg-lime text-black font-semibold' : 'text-muted hover:text-foreground'
+                  }`}
               >
                 Kanban
               </button>
@@ -227,18 +225,18 @@ export default function LeadsPage() {
               const dueToday = isDueToday(lead.next_follow_up_date)
 
               async function handleDirectDelete(e: React.MouseEvent, id: string, name: string) {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!confirm(`Delete lead "${name}"?`)) return
-    try {
-      await deleteLead(id)
-      loadData()
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to delete')
-    }
-  }
+                e.preventDefault()
+                e.stopPropagation()
+                if (!confirm(`Delete lead "${name}"?`)) return
+                try {
+                  await deleteLead(id)
+                  loadData()
+                } catch (err: unknown) {
+                  alert(err instanceof Error ? err.message : 'Failed to delete')
+                }
+              }
 
-  return (
+              return (
                 <Link
                   key={lead.id}
                   href={`/leads/${lead.id}`}
@@ -257,9 +255,8 @@ export default function LeadsPage() {
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${
-                          STAGE_COLORS[lead.stage] || 'bg-card border-border text-foreground'
-                        }`}
+                        className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${STAGE_COLORS[lead.stage] || 'bg-card border-border text-foreground'
+                          }`}
                       >
                         {lead.stage}
                       </span>
@@ -282,8 +279,8 @@ export default function LeadsPage() {
                           overdue
                             ? 'text-danger font-medium'
                             : dueToday
-                            ? 'text-warning font-medium'
-                            : ''
+                              ? 'text-warning font-medium'
+                              : ''
                         }
                       >
                         Follow-up: {formatDate(lead.next_follow_up_date)}
@@ -301,18 +298,18 @@ export default function LeadsPage() {
             {LEAD_STAGES.map((stage) => {
               const stageLeads = leads.filter((l) => l.stage === stage)
               async function handleDirectDelete(e: React.MouseEvent, id: string, name: string) {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!confirm(`Delete lead "${name}"?`)) return
-    try {
-      await deleteLead(id)
-      loadData()
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to delete')
-    }
-  }
+                e.preventDefault()
+                e.stopPropagation()
+                if (!confirm(`Delete lead "${name}"?`)) return
+                try {
+                  await deleteLead(id)
+                  loadData()
+                } catch (err: unknown) {
+                  alert(err instanceof Error ? err.message : 'Failed to delete')
+                }
+              }
 
-  return (
+              return (
                 <div
                   key={stage}
                   className="w-72 shrink-0 bg-card/60 border border-border rounded-xl p-3 flex flex-col max-h-[75vh]"
@@ -340,13 +337,12 @@ export default function LeadsPage() {
                         {lead.phone && <p className="text-muted text-[11px] mt-1">{lead.phone}</p>}
                         {lead.next_follow_up_date && (
                           <div
-                            className={`mt-2 text-[10px] ${
-                              isOverdue(lead.next_follow_up_date)
+                            className={`mt-2 text-[10px] ${isOverdue(lead.next_follow_up_date)
                                 ? 'text-danger'
                                 : isDueToday(lead.next_follow_up_date)
-                                ? 'text-warning'
-                                : 'text-muted'
-                            }`}
+                                  ? 'text-warning'
+                                  : 'text-muted'
+                              }`}
                           >
                             Due: {formatDate(lead.next_follow_up_date)}
                           </div>

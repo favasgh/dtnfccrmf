@@ -246,9 +246,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold font-mono">{order.order_no}</h1>
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                    STATUS_COLORS[order.status] || 'bg-card border-border'
-                  }`}
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[order.status] || 'bg-card border-border'
+                    }`}
                 >
                   {order.status}
                 </span>

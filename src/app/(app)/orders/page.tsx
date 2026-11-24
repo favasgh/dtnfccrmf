@@ -88,9 +88,8 @@ export default function OrdersPage() {
         <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs">
           <button
             onClick={() => setStatusFilter('ALL')}
-            className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${
-              statusFilter === 'ALL' ? 'bg-lime text-black' : 'bg-card border border-border text-muted hover:text-foreground'
-            }`}
+            className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${statusFilter === 'ALL' ? 'bg-lime text-black' : 'bg-card border border-border text-muted hover:text-foreground'
+              }`}
           >
             All Orders
           </button>
@@ -98,9 +97,8 @@ export default function OrdersPage() {
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                statusFilter === st ? 'bg-lime text-black' : 'bg-card border border-border text-muted hover:text-foreground'
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${statusFilter === st ? 'bg-lime text-black' : 'bg-card border border-border text-muted hover:text-foreground'
+                }`}
             >
               {st}
             </button>
@@ -137,9 +135,8 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-base text-foreground font-mono">{o.order_no}</span>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                            STATUS_COLORS[o.status] || 'bg-card border-border'
-                          }`}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${STATUS_COLORS[o.status] || 'bg-card border-border'
+                            }`}
                         >
                           {o.status}
                         </span>
