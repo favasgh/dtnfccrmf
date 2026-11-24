@@ -57,10 +57,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   async function loadData() {
     setLoading(true)
     try {
-      const [res, pList] = await Promise.all([
+      let [res, pList] = await Promise.all([
         getOrder(id),
         getProductsForOrderSelect(),
       ])
+
+      // In case of slight replica-set sync delay right after creation, retry once
+      if (!res.order) {
+        await new Promise((r) => setTimeout(r, 600))
+        const retry = await getOrder(id)
+        if (retry.order) {
+          res = retry
+        }
+      }
+
       setOrder(res.order)
       setItems(res.items)
       setCustomer(res.customer)
@@ -230,11 +240,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <>
         <Header title="Order Not Found" />
-        <div className="p-8 text-center">
+        <div className="p-8 text-center space-y-3">
           <p className="text-muted">Order could not be found.</p>
-          <Link href="/orders" className="text-lime underline mt-2 inline-block">
-            Back to Orders
-          </Link>
+          <div className="flex justify-center items-center gap-3">
+            <button
+              onClick={() => loadData()}
+              className="px-3.5 py-1.5 bg-card border border-border text-foreground hover:bg-card-hover text-xs font-semibold rounded-lg flex items-center gap-1.5"
+            >
+              <span>🔄</span> Retry
+            </button>
+            <Link href="/orders" className="px-3.5 py-1.5 bg-lime text-black font-semibold text-xs rounded-lg hover:bg-lime-dark">
+              Back to Orders
+            </Link>
+          </div>
         </div>
       </>
     )

@@ -59,12 +59,15 @@ export async function getOrder(id: string): Promise<{
   customer: Customer | null
 }> {
   const db = await readDB()
-  const rawOrder = db.orders.find((o) => o.id === id)
+  const cleanId = decodeURIComponent(id || '').trim()
+  const rawOrder = db.orders.find(
+    (o) => o.id === cleanId || o.order_no?.toLowerCase() === cleanId.toLowerCase()
+  )
   if (!rawOrder) return { order: null, items: [], customer: null }
 
   const order = computeOrderTotals(rawOrder, db.order_items, db.products)
   const items = db.order_items
-    .filter((it) => it.order_id === id)
+    .filter((it) => it.order_id === rawOrder.id || it.order_id === cleanId)
     .map((it) => ({
       ...it,
       product: db.products.find((p) => p.id === it.product_id),

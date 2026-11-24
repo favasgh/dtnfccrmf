@@ -13,11 +13,14 @@ try {
 
 const dbName = process.env.MONGODB_DB || 'doubletap'
 
+const DEFAULT_ATLAS_URI =
+  'mongodb://mfavax_db_user:BV2LeiA5YTPn85QG@ac-r4uff4o-shard-00-00.2apd5qu.mongodb.net:27017,ac-r4uff4o-shard-00-01.2apd5qu.mongodb.net:27017,ac-r4uff4o-shard-00-02.2apd5qu.mongodb.net:27017/doubletap?ssl=true&replicaSet=atlas-zm4nze-shard-0&authSource=admin&retryWrites=true&w=majority'
+
 let cachedClient: MongoClient | null = null
 let cachedDb: Db | null = null
 
 export function isMongoConfigured(): boolean {
-  const currentUri = process.env.MONGODB_URI || ''
+  const currentUri = process.env.MONGODB_URI || DEFAULT_ATLAS_URI
   return currentUri.trim().length > 0 && !currentUri.includes('YOUR_MONGODB_URI_HERE')
 }
 
@@ -59,7 +62,7 @@ async function getEffectiveUri(rawUri: string): Promise<string> {
 }
 
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db } | null> {
-  const currentUri = process.env.MONGODB_URI || ''
+  const currentUri = process.env.MONGODB_URI || DEFAULT_ATLAS_URI
 
   if (!isMongoConfigured()) {
     console.warn('[MongoDB] isMongoConfigured returned false!')
