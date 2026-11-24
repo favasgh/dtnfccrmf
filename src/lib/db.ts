@@ -73,6 +73,11 @@ async function readLocalFileDB(): Promise<DatabaseSchema> {
     return {
       ...getDefaultDB(),
       ...parsed,
+      leads: parsed.leads || [],
+      customers: parsed.customers || [],
+      orders: parsed.orders || [],
+      order_items: parsed.order_items || [],
+      activities: parsed.activities || [],
       transactions: parsed.transactions || [],
       settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
     }
@@ -93,68 +98,48 @@ async function writeLocalFileDB(db: DatabaseSchema): Promise<void> {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function syncCollection(db: Db, collectionName: string, items: any[]): Promise<void> {
+  const col = db.collection(collectionName)
+  if (!items || items.length === 0) {
+    await col.deleteMany({})
+    return
+  }
+
+  const ids = items.map((it) => it.id)
+  await col.deleteMany({ id: { $nin: ids } })
+
+  const ops = items.map((it) => ({
+    updateOne: {
+      filter: { id: it.id },
+      update: { $set: it },
+      upsert: true,
+    },
+  }))
+  await col.bulkWrite(ops)
+}
+
 async function writeMongoCollections(db: Db, data: DatabaseSchema): Promise<void> {
-  // Sync products
-  await db.collection('products').deleteMany({})
-  if (data.products?.length > 0) {
-    await db.collection('products').insertMany(data.products.map((p) => ({ ...p })))
-  }
-
-  // Sync leads
-  await db.collection('leads').deleteMany({})
-  if (data.leads?.length > 0) {
-    await db.collection('leads').insertMany(data.leads.map((l) => ({ ...l })))
-  }
-
-  // Sync customers
-  await db.collection('customers').deleteMany({})
-  if (data.customers?.length > 0) {
-    await db.collection('customers').insertMany(data.customers.map((c) => ({ ...c })))
-  }
-
-  // Sync orders
-  await db.collection('orders').deleteMany({})
-  if (data.orders?.length > 0) {
-    await db.collection('orders').insertMany(data.orders.map((o) => ({ ...o })))
-  }
-
-  // Sync order_items
-  await db.collection('order_items').deleteMany({})
-  if (data.order_items?.length > 0) {
-    await db.collection('order_items').insertMany(data.order_items.map((i) => ({ ...i })))
-  }
-
-  // Sync activities
-  await db.collection('activities').deleteMany({})
-  if (data.activities?.length > 0) {
-    await db.collection('activities').insertMany(data.activities.map((a) => ({ ...a })))
-  }
-
-  // Sync whatsapp_templates
-  await db.collection('whatsapp_templates').deleteMany({})
-  if (data.whatsapp_templates?.length > 0) {
-    await db.collection('whatsapp_templates').insertMany(data.whatsapp_templates.map((t) => ({ ...t })))
-  }
-
-  // Sync transactions
-  await db.collection('transactions').deleteMany({})
-  if (data.transactions?.length > 0) {
-    await db.collection('transactions').insertMany(data.transactions.map((t) => ({ ...t })))
-  }
-
-  // Sync settings
-  await db.collection('settings').updateOne(
-    { id: 'global' },
-    { $set: { id: 'global', ...data.settings } },
-    { upsert: true }
-  )
-
-  // Sync counter
-  await db.collection('counters').updateOne(
-    { id: 'order_counter' },
-    { $set: { id: 'order_counter', count: data.order_counter || 0 } },
-    { upsert: true }
-  )
+  await Promise.all([
+    syncCollection(db, 'products', data.products),
+    syncCollection(db, 'leads', data.leads),
+    syncCollection(db, 'customers', data.customers),
+    syncCollection(db, 'orders', data.orders),
+    syncCollection(db, 'order_items', data.order_items),
+    syncCollection(db, 'activities', data.activities),
+    syncCollection(db, 'whatsapp_templates', data.whatsapp_templates),
+    syncCollection(db, 'transactions', data.transactions),
+    db.collection('settings').updateOne(
+      { id: 'global' },
+      { $set: { id: 'global', ...data.settings } },
+      { upsert: true }
+    ),
+    db.collection('counters').updateOne(
+      { id: 'order_counter' },
+      { $set: { id: 'order_counter', count: data.order_counter || 0 } },
+      { upsert: true }
+    ),
+  ])
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -172,10 +157,9 @@ export async function readDB(): Promise<DatabaseSchema> {
       try {
         const { db } = mongo
 
-        // Check if database is initialized
+        // Check if database is initialized with products
         const productsCount = await db.collection('products').countDocuments()
         if (productsCount === 0) {
-          // Auto-migrate from existing local JSON DB
           const localData = await readLocalFileDB()
           await writeMongoCollections(db, localData)
           return localData

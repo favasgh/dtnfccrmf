@@ -71,7 +71,7 @@ export default function LeadsPage() {
     if (!newName.trim()) return
     setCreating(true)
     try {
-      await createLead({
+      const created = await createLead({
         name: newName.trim(),
         business_name: newBiz.trim() || undefined,
         phone: newPhone.trim() || undefined,
@@ -79,13 +79,19 @@ export default function LeadsPage() {
         interested_product: newProduct.trim() || undefined,
         notes: newNotes.trim() || undefined,
       })
+      if (created) {
+        setLeads((prev) => [created, ...prev.filter((l) => l.id !== created.id)])
+      }
       setShowAddModal(false)
       setNewName('')
       setNewBiz('')
       setNewPhone('')
       setNewNotes('')
       setNewProduct('')
-      loadData()
+      setStageFilter('ALL')
+      setSourceFilter('ALL')
+      setSearch('')
+      await loadData()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error creating lead')
     } finally {
@@ -171,6 +177,13 @@ export default function LeadsPage() {
               className="px-3 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground"
             >
               Import CSV
+            </button>
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-3.5 py-2 bg-lime text-black font-semibold text-xs rounded-lg hover:bg-lime-dark shrink-0 flex items-center justify-center gap-1 shadow"
+            >
+              <span>+</span> Add Lead
             </button>
           </div>
         </div>

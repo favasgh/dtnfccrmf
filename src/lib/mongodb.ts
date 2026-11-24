@@ -1,23 +1,17 @@
 import { MongoClient, Db } from 'mongodb'
 import dns from 'dns'
 
-// Ensure Node can resolve MongoDB Atlas SRV records across all network/ISP configurations
+// Force Google & Cloudflare DNS to guarantee SRV resolution across all ISPs (e.g. Airtel, Jio)
 try {
   dns.setServers(['8.8.8.8', '1.1.1.1'])
 } catch {
   // Ignore if custom DNS cannot be set
 }
 
-const uri = process.env.MONGODB_URI || ''
 const dbName = process.env.MONGODB_DB || 'doubletap'
 
 let cachedClient: MongoClient | null = null
 let cachedDb: Db | null = null
-
-declare global {
-  // eslint-disable-next-line no-var
-  var _mongoClientPromise: Promise<MongoClient> | undefined
-}
 
 export function isMongoConfigured(): boolean {
   const currentUri = process.env.MONGODB_URI || ''
@@ -31,25 +25,26 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 
   const currentUri = process.env.MONGODB_URI || ''
 
+  // If already connected and ping succeeds, return cached connection
   if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb }
+    try {
+      await cachedDb.command({ ping: 1 })
+      return { client: cachedClient, db: cachedDb }
+    } catch {
+      // Stale connection, reconnect
+      cachedClient = null
+      cachedDb = null
+    }
   }
 
   try {
-    let clientPromise: Promise<MongoClient>
+    const client = new MongoClient(currentUri, {
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 20000,
+      serverSelectionTimeoutMS: 10000,
+    })
 
-    if (process.env.NODE_ENV === 'development') {
-      if (!global._mongoClientPromise) {
-        const client = new MongoClient(currentUri)
-        global._mongoClientPromise = client.connect()
-      }
-      clientPromise = global._mongoClientPromise
-    } else {
-      const client = new MongoClient(currentUri)
-      clientPromise = client.connect()
-    }
-
-    const client = await clientPromise
+    await client.connect()
     const db = client.db(dbName)
 
     cachedClient = client
@@ -57,6 +52,8 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 
     return { client, db }
   } catch (error) {
+    cachedClient = null
+    cachedDb = null
     console.error('❌ Failed to connect to MongoDB:', error)
     return null
   }
