@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Order, OrderItem, Customer, Settings } from '@/lib/types'
-import { getOrder } from '../../actions'
+import { getOrder, updateOrder } from '../../actions'
 import { getSettings } from '../../../settings/actions'
 
 function formatInvoiceDate(dateStr: string | null): string {
@@ -34,6 +34,16 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [settings, setSettings] = useState<Settings['data']>({})
   const [loading, setLoading] = useState(true)
+
+  async function handleSwitchPayment(method: 'bank' | 'cash') {
+    if (!order) return
+    setOrder({ ...order, payment_method: method })
+    try {
+      await updateOrder(id, { payment_method: method })
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   useEffect(() => {
     async function loadInvoiceData() {
@@ -98,10 +108,36 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
         <Link href={`/orders/${id}`} className="text-xs text-muted hover:text-foreground">
           ← Back to Order
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Quick Payment Mode Selector */}
+          <div className="bg-card border border-border rounded-lg p-0.5 flex items-center text-xs">
+            <button
+              onClick={() => handleSwitchPayment('bank')}
+              className={`px-2.5 py-1 sm:py-1.5 rounded-md font-semibold text-xs flex items-center gap-1 transition-colors ${
+                order.payment_method !== 'cash'
+                  ? 'bg-lime text-black shadow-sm'
+                  : 'text-muted hover:text-foreground'
+              }`}
+              title="Set payment mode to Bank / UPI"
+            >
+              <span>🏛️</span> Bank / UPI
+            </button>
+            <button
+              onClick={() => handleSwitchPayment('cash')}
+              className={`px-2.5 py-1 sm:py-1.5 rounded-md font-semibold text-xs flex items-center gap-1 transition-colors ${
+                order.payment_method === 'cash'
+                  ? 'bg-amber-400 text-black shadow-sm'
+                  : 'text-muted hover:text-foreground'
+              }`}
+              title="Set payment mode to Cash in Hand"
+            >
+              <span>💵</span> Cash
+            </button>
+          </div>
+
           <Link
             href={`/orders/${id}/edit`}
-            className="px-2.5 py-1.5 sm:px-3.5 sm:py-2 bg-card border border-border text-foreground hover:border-lime/40 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-colors"
+            className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-card border border-border text-foreground hover:border-lime/40 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-colors"
           >
             <span>✏️</span> Edit Bill
           </Link>
@@ -149,6 +185,12 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
               <div className="flex justify-between sm:justify-end gap-2.5">
                 <span className="text-gray-600 font-semibold">Due Date:</span>
                 <span className="text-black">{formatInvoiceDate(order.delivery_date || order.order_date)}</span>
+              </div>
+              <div className="flex justify-between sm:justify-end gap-2.5">
+                <span className="text-gray-600 font-semibold">Payment Mode:</span>
+                <span className="text-black font-bold">
+                  {order.payment_method === 'cash' ? 'Cash in Hand' : 'Bank Account / UPI'}
+                </span>
               </div>
             </div>
           </div>
@@ -234,10 +276,19 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
 
         {/* Bottom Bank / Payment Details */}
         <div className="mt-6 sm:mt-8 text-[11px] sm:text-xs font-bold text-black leading-relaxed space-y-0.5">
-          <div>Account No. :- {bankAccountNo}</div>
-          <div>IFSC Code :- {bankIfsc}</div>
-          <div>Name :- {bankHolderName}</div>
-          <div>Google Pay Number :- {googlePayNumber}</div>
+          <div className="text-gray-600 font-semibold mb-0.5">
+            Payment Mode :- <span className="text-black font-bold">{order.payment_method === 'cash' ? 'Cash in Hand' : 'Bank Account / UPI'}</span>
+          </div>
+          {order.payment_method === 'cash' ? (
+            <div className="text-gray-700 font-semibold">Status :- Payment Received in Cash</div>
+          ) : (
+            <>
+              <div>Account No. :- {bankAccountNo}</div>
+              <div>IFSC Code :- {bankIfsc}</div>
+              <div>Name :- {bankHolderName}</div>
+              <div>Google Pay Number :- {googlePayNumber}</div>
+            </>
+          )}
         </div>
       </div>
     </div>

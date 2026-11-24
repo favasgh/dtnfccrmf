@@ -33,6 +33,7 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
   // Payment & Notes editable state
   const [advanceAmount, setAdvanceAmount] = useState<number | ''>('')
   const [deliveryCharge, setDeliveryCharge] = useState<number | ''>('')
+  const [paymentMethod, setPaymentMethod] = useState<'bank' | 'cash' | 'upi'>('bank')
   const [orderNotes, setOrderNotes] = useState<string>('')
   const [savingPayment, setSavingPayment] = useState(false)
   const [deletingOrder, setDeletingOrder] = useState(false)
@@ -79,6 +80,7 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
       if (res.order) {
         setAdvanceAmount(res.order.advance_amount ? res.order.advance_amount : '')
         setDeliveryCharge(res.order.delivery_charge ? res.order.delivery_charge : '')
+        setPaymentMethod(res.order.payment_method || 'bank')
         setOrderNotes(res.order.notes || '')
       }
     } finally {
@@ -204,6 +206,7 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
       await updateOrder(id, {
         advance_amount: Number(advanceAmount) || 0,
         delivery_charge: Number(deliveryCharge) || 0,
+        payment_method: paymentMethod,
         notes: orderNotes.trim() || null,
       })
       setSuccessMsg('Payment & notes saved successfully!')
@@ -617,6 +620,34 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
                       formatINR(liveBalanceDue)
                     )}
                   </span>
+                </div>
+
+                <div className="pt-2 border-t border-border/40 space-y-1">
+                  <label className="block text-[11px] text-muted font-medium">Payment Mode (Account)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('bank')}
+                      className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
+                        paymentMethod === 'bank' || paymentMethod === 'upi'
+                          ? 'bg-lime/20 border-lime text-lime'
+                          : 'bg-black border-border text-muted hover:border-border/80'
+                      }`}
+                    >
+                      <span>🏛️</span> Bank / UPI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('cash')}
+                      className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
+                        paymentMethod === 'cash'
+                          ? 'bg-amber-400/20 border-amber-400 text-amber-400'
+                          : 'bg-black border-border text-muted hover:border-border/80'
+                      }`}
+                    >
+                      <span>💵</span> Cash
+                    </button>
+                  </div>
                 </div>
 
                 <div className="pt-2">

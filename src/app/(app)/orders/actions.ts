@@ -198,6 +198,7 @@ export async function updateOrder(id: string, updates: Partial<Order>) {
 
   revalidatePath('/orders')
   revalidatePath(`/orders/${id}`)
+  revalidatePath(`/orders/${id}/invoice`)
   revalidatePath('/dashboard')
   revalidatePath('/accounts')
 }
