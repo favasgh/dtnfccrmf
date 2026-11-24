@@ -153,7 +153,8 @@ export default function OrdersPage() {
           <div className="grid gap-2.5">
             {orders.map((o) => {
               const cust = (o as unknown as { customer?: { name: string; business_name: string } }).customer
-              const hasBalance = (o.balance_due || 0) > 0 && o.status !== 'Cancelled' && o.status !== 'Closed'
+              const isClosedOrReceived = o.status === 'Closed' || Boolean(o.balance_received)
+              const hasBalance = !isClosedOrReceived && (o.balance_due || 0) > 0 && o.status !== 'Cancelled'
 
               return (
                 <Link

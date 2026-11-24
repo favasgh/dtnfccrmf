@@ -135,7 +135,8 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
   const discountVal = Number(discount) || 0
   const deliveryVal = Number(deliveryCharge) || 0
   const grandTotal = Math.max(0, itemsSubtotal + deliveryVal - discountVal)
-  const balanceDue = Math.max(0, grandTotal - (Number(advanceAmount) || 0))
+  const isClosedOrReceived = status === 'Closed' || balanceReceived
+  const balanceDue = isClosedOrReceived ? 0 : Math.max(0, grandTotal - (Number(advanceAmount) || 0))
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -292,7 +293,13 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
                 <label className="block text-xs text-muted mb-1">Order Status</label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as OrderStatus)}
+                  onChange={(e) => {
+                    const newSt = e.target.value as OrderStatus
+                    setStatus(newSt)
+                    if (newSt === 'Closed') {
+                      setBalanceReceived(true)
+                    }
+                  }}
                   className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-lime"
                 >
                   {ORDER_STATUSES.map((st) => (
@@ -319,11 +326,14 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
                 <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={balanceReceived}
+                    checked={status === 'Closed' ? true : balanceReceived}
+                    disabled={status === 'Closed'}
                     onChange={(e) => setBalanceReceived(e.target.checked)}
                     className="accent-lime rounded"
                   />
-                  <span>Balance Payment Received in Full</span>
+                  <span>
+                    Balance Payment Received in Full {status === 'Closed' && '(Auto-set for Closed orders)'}
+                  </span>
                 </label>
                 <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
                   <input
@@ -527,7 +537,13 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
               <div className="flex justify-between font-bold text-base pt-2 border-t border-border">
                 <span>Balance Due:</span>
                 <span className={balanceDue > 0 ? 'text-danger' : 'text-lime'}>
-                  {formatINR(balanceDue)}
+                  {isClosedOrReceived ? (
+                    <span className="text-lime flex items-center gap-1 font-bold">
+                      <span>✓</span> ₹0 (Full Amount Received)
+                    </span>
+                  ) : (
+                    formatINR(balanceDue)
+                  )}
                 </span>
               </div>
             </div>

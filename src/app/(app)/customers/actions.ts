@@ -87,10 +87,12 @@ export async function getCustomer(id: string): Promise<{
     .map((o) => {
       const orderItems = db.order_items.filter((it) => it.order_id === o.id)
       const itemsTotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
-      const grandTotal = itemsTotal + (o.delivery_charge || 0)
-      const balanceDue = grandTotal - (o.advance_amount || 0)
+      const grandTotal = Math.max(0, itemsTotal + (o.delivery_charge || 0) - (o.discount || 0))
+      const isClosedOrReceived = o.status === 'Closed' || Boolean(o.balance_received)
+      const balanceDue = isClosedOrReceived ? 0 : Math.max(0, grandTotal - (o.advance_amount || 0))
       return {
         ...o,
+        balance_received: isClosedOrReceived,
         total_amount: grandTotal,
         balance_due: balanceDue,
       }

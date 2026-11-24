@@ -122,14 +122,15 @@ export async function getFinancialSummary() {
     if (o.status === 'Cancelled') return
     const orderItems = db.order_items.filter((it) => it.order_id === o.id)
     const itemsTotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
-    const grandTotal = itemsTotal + (o.delivery_charge || 0)
+    const grandTotal = Math.max(0, itemsTotal + (o.delivery_charge || 0) - (o.discount || 0))
     const advance = o.advance_amount || 0
     const balance = Math.max(0, grandTotal - advance)
 
-    orderCashInflow += advance
     if (o.balance_received || o.status === 'Closed') {
-      orderCashInflow += balance
+      // Closed / Balance Received: Full bill amount is cash collected
+      orderCashInflow += grandTotal
     } else {
+      orderCashInflow += advance
       pendingReceivables += balance
     }
   })

@@ -550,7 +550,8 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
             const discountAmount = order.discount || 0
             const liveItemsTotal = items.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
             const liveGrandTotal = Math.max(0, liveItemsTotal + (Number(deliveryCharge) || 0) - discountAmount)
-            const liveBalanceDue = Math.max(0, liveGrandTotal - (Number(advanceAmount) || 0))
+            const isClosedOrReceived = order.status === 'Closed' || Boolean(order.balance_received)
+            const liveBalanceDue = isClosedOrReceived ? 0 : Math.max(0, liveGrandTotal - (Number(advanceAmount) || 0))
 
             return (
               <div className="bg-card border border-border rounded-xl p-5 space-y-2 text-xs">
@@ -608,7 +609,13 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
                 <div className="flex justify-between font-bold text-sm pt-2 border-t border-border">
                   <span>Balance Due:</span>
                   <span className={liveBalanceDue > 0 ? 'text-danger' : 'text-lime'}>
-                    {formatINR(liveBalanceDue)}
+                    {isClosedOrReceived ? (
+                      <span className="text-lime flex items-center gap-1 font-bold">
+                        <span>✓</span> ₹0 (Full Amount Received)
+                      </span>
+                    ) : (
+                      formatINR(liveBalanceDue)
+                    )}
                   </span>
                 </div>
 
@@ -730,7 +737,8 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
               <span className="font-medium text-foreground">Balance Received</span>
               <input
                 type="checkbox"
-                defaultChecked={order.balance_received}
+                checked={order.status === 'Closed' ? true : Boolean(order.balance_received)}
+                disabled={order.status === 'Closed'}
                 onChange={(e) => handleUpdateField({ balance_received: e.target.checked })}
                 className="w-4 h-4 accent-lime rounded"
               />

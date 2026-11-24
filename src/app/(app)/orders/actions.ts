@@ -9,7 +9,8 @@ function computeOrderTotals(order: Order, items: OrderItem[], products: Product[
   const items_subtotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
   const discount = order.discount || 0
   const total_amount = Math.max(0, items_subtotal + (order.delivery_charge || 0) - discount)
-  const balance_due = Math.max(0, total_amount - (order.advance_amount || 0))
+  const isClosedOrReceived = order.status === 'Closed' || Boolean(order.balance_received)
+  const balance_due = isClosedOrReceived ? 0 : Math.max(0, total_amount - (order.advance_amount || 0))
   const profit = orderItems.reduce((sum, it) => {
     const prod = products.find((p) => p.id === it.product_id)
     const cost = prod ? prod.my_cost : 0
@@ -18,6 +19,7 @@ function computeOrderTotals(order: Order, items: OrderItem[], products: Product[
 
   return {
     ...order,
+    balance_received: isClosedOrReceived,
     discount,
     total_amount,
     balance_due,
