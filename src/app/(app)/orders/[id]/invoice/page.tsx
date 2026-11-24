@@ -50,16 +50,18 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
         setLoading(false)
       }
     }
-    loadInvoiceData()
+    if (id) {
+      loadInvoiceData()
+    }
   }, [id])
 
   if (loading) {
-    return <div className="p-8 text-center text-muted">Generating invoice...</div>
+    return <div className="p-8 text-center text-muted font-sans">Generating invoice...</div>
   }
 
   if (!order || !customer) {
     return (
-      <div className="p-8 text-center text-muted space-y-3">
+      <div className="p-8 text-center text-muted space-y-3 font-sans">
         <p>Order or Customer not found.</p>
         <Link href="/orders" className="text-lime hover:underline text-xs">
           ← Back to Orders
@@ -90,36 +92,36 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
   }
 
   return (
-    <div className="min-h-screen bg-black text-foreground md:py-8 font-sans">
+    <div className="min-h-screen bg-black text-foreground py-3 sm:py-6 md:py-8 font-sans">
       {/* Top Action Bar (hidden when printing) */}
-      <div className="no-print max-w-[210mm] mx-auto px-4 mb-4 flex items-center justify-between">
+      <div className="no-print max-w-[210mm] mx-auto px-3 sm:px-4 mb-3 sm:mb-4 flex flex-wrap items-center justify-between gap-2">
         <Link href={`/orders/${id}`} className="text-xs text-muted hover:text-foreground">
           ← Back to Order
         </Link>
         <div className="flex items-center gap-2">
           <Link
             href={`/orders/${id}/edit`}
-            className="px-3.5 py-2 bg-card border border-border text-foreground hover:border-lime/40 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-colors"
+            className="px-2.5 py-1.5 sm:px-3.5 sm:py-2 bg-card border border-border text-foreground hover:border-lime/40 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-colors"
           >
             <span>✏️</span> Edit Bill
           </Link>
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 bg-lime text-black font-bold text-xs rounded-lg hover:bg-lime-dark flex items-center gap-1.5 shadow"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-lime text-black font-bold text-xs rounded-lg hover:bg-lime-dark flex items-center gap-1.5 shadow"
           >
-            <span>🖨️</span> Print / Save as PDF
+            <span>🖨️</span> Print / Save PDF
           </button>
         </div>
       </div>
 
       {/* Printable Exact Invoice Sheet (A4 Proportion) */}
-      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white text-black p-8 sm:p-12 md:p-16 shadow-2xl rounded-sm print:shadow-none print:p-6 print:m-0 flex flex-col justify-between">
+      <div className="max-w-[210mm] min-h-auto sm:min-h-[297mm] mx-auto bg-white text-black p-4 sm:p-10 md:p-16 shadow-2xl rounded-sm print:shadow-none print:p-6 print:m-0 flex flex-col justify-between font-sans">
         <div>
           {/* Top Header */}
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6">
             {/* Left: Brand Logo & Invoice title */}
             <div>
-              <div className="w-28 sm:w-36">
+              <div className="w-24 sm:w-36">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/doubletap-logo.png"
@@ -127,24 +129,24 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
                   className="w-full h-auto object-contain"
                 />
               </div>
-              <div className="mt-6 sm:mt-8">
-                <h1 className="text-5xl sm:text-6xl font-light tracking-tight text-black">
+              <div className="mt-4 sm:mt-8">
+                <h1 className="text-4xl sm:text-6xl font-light tracking-tight text-black">
                   Invoice
                 </h1>
               </div>
             </div>
 
             {/* Right: Invoice details */}
-            <div className="text-right text-sm sm:text-base font-bold text-black space-y-1.5 pt-12 sm:pt-14">
-              <div className="flex justify-end gap-3">
+            <div className="text-left sm:text-right text-xs sm:text-base font-bold text-black space-y-1 sm:space-y-1.5 pt-0 sm:pt-14 self-stretch sm:self-auto border-t sm:border-t-0 border-gray-100 pt-2 sm:pt-0">
+              <div className="flex justify-between sm:justify-end gap-3">
                 <span className="text-black">Invoice No:</span>
-                <span className="text-black">{order.order_no}</span>
+                <span className="text-black font-mono">{order.order_no}</span>
               </div>
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-between sm:justify-end gap-3">
                 <span className="text-black">Issue Date:</span>
                 <span className="text-black">{formatInvoiceDate(order.order_date)}</span>
               </div>
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-between sm:justify-end gap-3">
                 <span className="text-black">Due Date:</span>
                 <span className="text-black">{formatInvoiceDate(order.delivery_date || order.order_date)}</span>
               </div>
@@ -152,52 +154,55 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
           </div>
 
           {/* Main Gray Card Container */}
-          <div className="mt-8 sm:mt-10 bg-[#F4F6F8] rounded-[28px] sm:rounded-[34px] p-6 sm:p-10 space-y-8">
+          <div className="mt-6 sm:mt-10 bg-[#F4F6F8] rounded-2xl sm:rounded-[34px] p-3.5 sm:p-8 md:p-10 space-y-6 sm:space-y-8">
             {/* Bright Fluorescent Lime Box */}
-            <div className="bg-[#BAFF00] rounded-2xl sm:rounded-[22px] p-6 sm:p-8 text-black grid grid-cols-2 gap-6 sm:gap-8 shadow-sm">
+            <div className="bg-[#BAFF00] rounded-xl sm:rounded-[22px] p-4 sm:p-7 text-black grid grid-cols-2 gap-3 sm:gap-8 shadow-sm">
               <div>
-                <div className="text-sm sm:text-base font-bold text-black">Bill To</div>
-                <div className="text-base sm:text-lg font-bold text-black mt-3 sm:mt-4">{customer.name}</div>
+                <div className="text-xs sm:text-base font-bold text-black">Bill To</div>
+                <div className="text-sm sm:text-lg font-bold text-black mt-1.5 sm:mt-3 break-words">{customer.name}</div>
                 {customer.business_name && (
-                  <div className="text-sm sm:text-base font-bold text-black mt-0.5">{customer.business_name}</div>
+                  <div className="text-xs sm:text-base font-bold text-black mt-0.5 break-words">{customer.business_name}</div>
                 )}
                 {formattedCustPhone && (
-                  <div className="text-sm sm:text-base font-bold text-black mt-0.5">{formattedCustPhone}</div>
+                  <div className="text-xs sm:text-base font-bold text-black mt-0.5">{formattedCustPhone}</div>
                 )}
               </div>
 
               <div>
-                <div className="text-sm sm:text-base font-bold text-black">From</div>
-                <div className="text-base sm:text-lg font-bold text-black mt-3 sm:mt-4">{businessName}</div>
-                <div className="text-sm sm:text-base font-bold text-black mt-0.5">{businessCity}</div>
-                <div className="text-sm sm:text-base font-bold text-black mt-0.5">{businessPhone}</div>
+                <div className="text-xs sm:text-base font-bold text-black">From</div>
+                <div className="text-sm sm:text-lg font-bold text-black mt-1.5 sm:mt-3">{businessName}</div>
+                <div className="text-xs sm:text-base font-bold text-black mt-0.5">{businessCity}</div>
+                <div className="text-xs sm:text-base font-bold text-black mt-0.5">{businessPhone}</div>
               </div>
             </div>
 
             {/* Item Description Table */}
             <div className="pt-2">
-              <div className="grid grid-cols-12 pb-3 font-bold text-sm sm:text-base text-black border-b border-gray-300">
-                <div className="col-span-6">Item Description</div>
+              <div className="grid grid-cols-12 pb-2.5 sm:pb-3 font-bold text-xs sm:text-base text-black border-b border-gray-300">
+                <div className="col-span-5 sm:col-span-6">Item Description</div>
                 <div className="col-span-2 text-center">Qty</div>
-                <div className="col-span-2 text-center">Unit Price</div>
-                <div className="col-span-2 text-right">Amount</div>
+                <div className="col-span-2 text-right sm:text-center">
+                  <span className="sm:hidden">Price</span>
+                  <span className="hidden sm:inline">Unit Price</span>
+                </div>
+                <div className="col-span-3 sm:col-span-2 text-right">Amount</div>
               </div>
 
               <div className="divide-y divide-gray-200">
                 {items.map((it) => (
-                  <div key={it.id} className="grid grid-cols-12 py-3.5 sm:py-4 font-bold text-sm sm:text-base text-black items-center">
-                    <div className="col-span-6">{it.description}</div>
+                  <div key={it.id} className="grid grid-cols-12 py-3 sm:py-4 font-bold text-xs sm:text-base text-black items-center">
+                    <div className="col-span-5 sm:col-span-6 pr-1 break-words">{it.description}</div>
                     <div className="col-span-2 text-center">{it.qty}</div>
-                    <div className="col-span-2 text-center">{formatUnitPrice(it.unit_price)}</div>
-                    <div className="col-span-2 text-right">{formatRupees(it.qty * it.unit_price)}</div>
+                    <div className="col-span-2 text-right sm:text-center whitespace-nowrap">{formatUnitPrice(it.unit_price)}</div>
+                    <div className="col-span-3 sm:col-span-2 text-right whitespace-nowrap">{formatRupees(it.qty * it.unit_price)}</div>
                   </div>
                 ))}
               </div>
               <div className="border-b border-gray-300"></div>
 
               {/* Totals Section */}
-              <div className="flex justify-end pt-6">
-                <div className="w-64 sm:w-72 space-y-2 text-sm sm:text-base font-bold text-black">
+              <div className="flex justify-end pt-4 sm:pt-6">
+                <div className="w-full sm:w-72 space-y-1.5 sm:space-y-2 text-xs sm:text-base font-bold text-black">
                   <div className="flex justify-between items-center">
                     <span>Subtotal:</span>
                     <span>{formatRupees(itemsSubtotal)}</span>
@@ -217,7 +222,7 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center text-xl sm:text-2xl font-bold pt-4 text-black">
+                  <div className="flex justify-between items-center text-lg sm:text-2xl font-bold pt-3 sm:pt-4 text-black border-t border-gray-200 sm:border-t-0">
                     <span>Grand Total:</span>
                     <span>{formatRupees(grandTotal)}</span>
                   </div>
@@ -228,7 +233,7 @@ export default function InvoicePage({ params }: { params?: Promise<{ id: string 
         </div>
 
         {/* Bottom Bank / Payment Details */}
-        <div className="mt-12 sm:mt-16 text-sm sm:text-base font-bold text-black leading-relaxed space-y-1">
+        <div className="mt-8 sm:mt-16 text-xs sm:text-base font-bold text-black leading-relaxed space-y-0.5 sm:space-y-1">
           <div>Account No. :- {bankAccountNo}</div>
           <div>IFSC Code :- {bankIfsc}</div>
           <div>Name :- {bankHolderName}</div>

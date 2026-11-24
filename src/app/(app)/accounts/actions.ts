@@ -127,7 +127,6 @@ export async function getFinancialSummary() {
     const balance = Math.max(0, grandTotal - advance)
 
     if (o.balance_received || o.status === 'Closed') {
-      // Closed / Balance Received: Full bill amount is cash collected
       orderCashInflow += grandTotal
     } else {
       orderCashInflow += advance

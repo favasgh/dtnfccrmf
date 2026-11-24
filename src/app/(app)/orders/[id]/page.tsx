@@ -737,8 +737,7 @@ export default function OrderDetailPage({ params }: { params?: Promise<{ id: str
               <span className="font-medium text-foreground">Balance Received</span>
               <input
                 type="checkbox"
-                checked={order.status === 'Closed' ? true : Boolean(order.balance_received)}
-                disabled={order.status === 'Closed'}
+                defaultChecked={order.balance_received}
                 onChange={(e) => handleUpdateField({ balance_received: e.target.checked })}
                 className="w-4 h-4 accent-lime rounded"
               />

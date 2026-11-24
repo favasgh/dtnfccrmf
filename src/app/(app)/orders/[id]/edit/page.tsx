@@ -293,13 +293,7 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
                 <label className="block text-xs text-muted mb-1">Order Status</label>
                 <select
                   value={status}
-                  onChange={(e) => {
-                    const newSt = e.target.value as OrderStatus
-                    setStatus(newSt)
-                    if (newSt === 'Closed') {
-                      setBalanceReceived(true)
-                    }
-                  }}
+                  onChange={(e) => setStatus(e.target.value as OrderStatus)}
                   className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-lime"
                 >
                   {ORDER_STATUSES.map((st) => (
@@ -326,14 +320,11 @@ export default function EditOrderPage({ params }: { params?: Promise<{ id: strin
                 <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={status === 'Closed' ? true : balanceReceived}
-                    disabled={status === 'Closed'}
+                    checked={balanceReceived}
                     onChange={(e) => setBalanceReceived(e.target.checked)}
                     className="accent-lime rounded"
                   />
-                  <span>
-                    Balance Payment Received in Full {status === 'Closed' && '(Auto-set for Closed orders)'}
-                  </span>
+                  <span>Balance Payment Received in Full</span>
                 </label>
                 <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
                   <input
