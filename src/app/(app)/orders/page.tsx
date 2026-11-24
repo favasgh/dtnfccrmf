@@ -20,22 +20,44 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [search, setSearch] = useState('')
 
-  async function loadData() {
-    setLoading(true)
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true)
+    else setRefreshing(true)
     try {
       const data = await getOrders(statusFilter, search)
       setOrders(data)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
   useEffect(() => {
     loadData()
   }, [statusFilter])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData(true)
+    }, 6000)
+
+    const handleFocus = () => loadData(true)
+    window.addEventListener('focus', handleFocus)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleFocus()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [statusFilter, search])
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -75,6 +97,15 @@ export default function OrdersPage() {
               Search
             </button>
           </form>
+
+          <button
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            className="px-3 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground flex items-center justify-center"
+            title="Sync with cloud"
+          >
+            <span className={`inline-block text-xs ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
+          </button>
 
           <Link
             href="/orders/new"

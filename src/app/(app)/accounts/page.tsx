@@ -17,6 +17,7 @@ export default function AccountsPage() {
     categoryBreakdown: {} as Record<string, number>,
   })
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   // Filters
   const [typeFilter, setTypeFilter] = useState('ALL')
@@ -35,8 +36,9 @@ export default function AccountsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  async function loadData() {
-    setLoading(true)
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true)
+    else setRefreshing(true)
     try {
       const [txList, sum] = await Promise.all([
         getTransactions({
@@ -50,12 +52,32 @@ export default function AccountsPage() {
       setSummary(sum)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
   useEffect(() => {
     loadData()
   }, [typeFilter, categoryFilter])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData(true)
+    }, 6000)
+
+    const handleFocus = () => loadData(true)
+    window.addEventListener('focus', handleFocus)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleFocus()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [typeFilter, categoryFilter, search])
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -232,6 +254,14 @@ export default function AccountsPage() {
           </form>
 
           <div className="flex gap-2">
+            <button
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              className="px-3 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground flex items-center justify-center"
+              title="Sync with cloud"
+            >
+              <span className={`inline-block text-xs ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
+            </button>
             <button
               onClick={() => handleOpenAdd('expense')}
               className="flex-1 sm:flex-none px-4 py-2.5 bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5"

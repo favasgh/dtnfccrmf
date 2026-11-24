@@ -23,6 +23,7 @@ const STAGE_COLORS: Record<LeadStage, string> = {
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [view, setView] = useState<'list' | 'kanban'>('list')
   const [search, setSearch] = useState('')
   const [stageFilter, setStageFilter] = useState('ALL')
@@ -46,8 +47,9 @@ export default function LeadsPage() {
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{ imported: number; errors: string[] } | null>(null)
 
-  async function loadData() {
-    setLoading(true)
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true)
+    else setRefreshing(true)
     try {
       const [data, prods] = await Promise.all([
         getLeads({
@@ -61,12 +63,34 @@ export default function LeadsPage() {
       setProducts(prods)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
+  // 1. Initial load & filter change
   useEffect(() => {
     loadData()
   }, [stageFilter, sourceFilter])
+
+  // 2. Multi-device live auto-sync (polls every 6 seconds & syncs on tab focus)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData(true)
+    }, 6000)
+
+    const handleFocus = () => loadData(true)
+    window.addEventListener('focus', handleFocus)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleFocus()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [stageFilter, sourceFilter, search])
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -183,6 +207,15 @@ export default function LeadsPage() {
                 Kanban
               </button>
             </div>
+
+            <button
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              className="px-2.5 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground flex items-center gap-1"
+              title="Sync with cloud"
+            >
+              <span className={`inline-block text-xs ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
+            </button>
 
             <button
               onClick={() => {

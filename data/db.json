@@ -91,16 +91,52 @@
       "created_at": "2026-11-23T11:40:42.761Z"
     }
   ],
-  "leads": [],
+  "leads": [
+    {
+      "id": "lead_1795508796301",
+      "business_name": "Beezy Solutions",
+      "business_type": null,
+      "created_at": "2026-11-24T08:26:36.301Z",
+      "interested_product": "Manufactured Card",
+      "name": "Rashid",
+      "next_follow_up_date": null,
+      "notes": null,
+      "objection": null,
+      "phone": "+917012411774",
+      "source": "Friend",
+      "stage": "Won",
+      "user_id": "owner"
+    }
+  ],
   "customers": [],
   "orders": [],
   "order_items": [],
-  "activities": [],
+  "activities": [
+    {
+      "id": "act_1795508796301",
+      "created_at": "2026-11-24T08:26:36.301Z",
+      "customer_id": null,
+      "lead_id": "lead_1795508796301",
+      "text": "Lead created",
+      "type": "note",
+      "user_id": "owner"
+    },
+    {
+      "id": "act_1795508886083",
+      "created_at": "2026-11-24T08:28:06.083Z",
+      "customer_id": null,
+      "lead_id": "lead_1795508796301",
+      "text": "Stage updated to Won",
+      "type": "note",
+      "user_id": "owner"
+    }
+  ],
   "settings": {
+    "id": "global",
+    "business_address": "Calicut, Kerala, India",
+    "business_email": "hello@doubletapnfc.com",
     "business_name": "Double Tap NFC",
     "business_phone": "+91 8304830149",
-    "business_email": "hello@doubletapnfc.com",
-    "business_address": "Calicut, Kerala, India",
     "payment_details": "Bank: State Bank of India\nAccount: 123456789012\nIFSC: SBIN0001234\nUPI ID: 8304830149@upi\nGoogle Pay / PhonePe: +91 8304830149"
   },
   "whatsapp_templates": [
