@@ -162,8 +162,13 @@ export async function deleteLead(id: string) {
   const db = await readDB()
   db.leads = db.leads.filter((l) => l.id !== id)
   db.activities = db.activities.filter((a) => a.lead_id !== id)
+  // Clear any dangling references in customers
+  db.customers.forEach((c) => {
+    if (c.lead_id === id) c.lead_id = null
+  })
   await writeDB(db)
   revalidatePath('/leads')
+  revalidatePath('/customers')
 }
 
 export async function convertToCustomer(leadId: string): Promise<string> {
@@ -293,11 +298,30 @@ export async function addLeadActivity(leadId: string, type: Activity['type'], te
   revalidatePath(`/leads/${leadId}`)
 }
 
+function parseCsvLine(line: string): string[] {
+  const result: string[] = []
+  let insideQuotes = false
+  let current = ''
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (char === '"' || char === "'") {
+      insideQuotes = !insideQuotes
+    } else if (char === ',' && !insideQuotes) {
+      result.push(current.trim().replace(/^["']|["']$/g, ''))
+      current = ''
+    } else {
+      current += char
+    }
+  }
+  result.push(current.trim().replace(/^["']|["']$/g, ''))
+  return result
+}
+
 export async function importLeadsFromCsv(csvText: string): Promise<{ imported: number; errors: string[] }> {
   const lines = csvText.split('\n').map((l) => l.trim()).filter(Boolean)
   if (lines.length <= 1) return { imported: 0, errors: ['CSV is empty or header-only'] }
 
-  const header = lines[0].toLowerCase().split(',').map((h) => h.trim().replace(/^["']|["']$/g, ''))
+  const header = parseCsvLine(lines[0]).map((h) => h.toLowerCase())
   const nameIdx = header.findIndex((h) => h.includes('name') && !h.includes('business'))
   const bizIdx = header.findIndex((h) => h.includes('business'))
   const phoneIdx = header.findIndex((h) => h.includes('phone') || h.includes('mobile'))
@@ -308,7 +332,7 @@ export async function importLeadsFromCsv(csvText: string): Promise<{ imported: n
   const errors: string[] = []
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',').map((c) => c.trim().replace(/^["']|["']$/g, ''))
+    const cols = parseCsvLine(lines[i])
     const name = nameIdx !== -1 ? cols[nameIdx] : cols[0]
     if (!name) {
       errors.push(`Row ${i + 1}: Name missing`)

@@ -45,7 +45,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
   const deliveryCharge = order.delivery_charge || 0
   const grandTotal = itemsSubtotal + deliveryCharge
   const advancePaid = order.advance_amount || 0
-  const balanceDue = grandTotal - advancePaid
+  const balanceDue = Math.max(0, grandTotal - advancePaid)
 
   return (
     <div className="min-h-screen bg-black text-foreground md:py-8">

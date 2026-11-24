@@ -124,10 +124,10 @@ export async function getFinancialSummary() {
     const itemsTotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
     const grandTotal = itemsTotal + (o.delivery_charge || 0)
     const advance = o.advance_amount || 0
-    const balance = grandTotal - advance
+    const balance = Math.max(0, grandTotal - advance)
 
     orderCashInflow += advance
-    if (o.balance_received) {
+    if (o.balance_received || o.status === 'Closed') {
       orderCashInflow += balance
     } else {
       pendingReceivables += balance

@@ -6,8 +6,9 @@ import { readDB, writeDB } from '@/lib/db'
 
 function computeOrderTotals(order: Order, items: OrderItem[], products: Product[]): Order {
   const orderItems = items.filter((it) => it.order_id === order.id)
-  const total_amount = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
-  const balance_due = total_amount + (order.delivery_charge || 0) - (order.advance_amount || 0)
+  const items_subtotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
+  const total_amount = items_subtotal + (order.delivery_charge || 0)
+  const balance_due = Math.max(0, total_amount - (order.advance_amount || 0))
   const profit = orderItems.reduce((sum, it) => {
     const prod = products.find((p) => p.id === it.product_id)
     const cost = prod ? prod.my_cost : 0
@@ -94,8 +95,13 @@ export async function createOrder(
   }[]
 ): Promise<string> {
   const db = await readDB()
-  db.order_counter = (db.order_counter || 0) + 1
-  const order_no = `DT-${String(db.order_counter).padStart(3, '0')}`
+  const existingMax = db.orders.reduce((max, o) => {
+    const match = o.order_no?.match(/\d+$/)
+    return match ? Math.max(max, parseInt(match[0], 10)) : max
+  }, 0)
+  db.order_counter = Math.max(db.order_counter || 0, existingMax) + 1
+  const prefix = db.settings?.invoice_prefix || 'DT-'
+  const order_no = `${prefix}${String(db.order_counter).padStart(3, '0')}`
 
   const initialStatus: OrderStatus = orderData.advance_amount > 0 ? 'In Progress' : 'Awaiting Advance'
   const newOrder: Order = {
@@ -147,6 +153,7 @@ export async function createOrder(
   await writeDB(db)
   revalidatePath('/orders')
   revalidatePath('/dashboard')
+  revalidatePath('/accounts')
   return newOrder.id
 }
 
@@ -165,12 +172,23 @@ export async function updateOrder(id: string, updates: Partial<Order>) {
     }
   }
 
+  // If status moved to Closed, mark balance_received as true
+  if (updates.status === 'Closed') {
+    updates.balance_received = true
+  }
+
+  // Auto-advance from 'Awaiting Advance' to 'In Progress' if advance payment is recorded
+  if (!updates.status && current.status === 'Awaiting Advance' && updates.advance_amount !== undefined && updates.advance_amount > 0) {
+    updates.status = 'In Progress'
+  }
+
   db.orders[idx] = { ...current, ...updates }
   await writeDB(db)
 
   revalidatePath('/orders')
   revalidatePath(`/orders/${id}`)
   revalidatePath('/dashboard')
+  revalidatePath('/accounts')
 }
 
 export async function addOrderItem(

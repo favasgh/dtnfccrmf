@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES, Product } from '@/lib/types'
@@ -21,6 +22,7 @@ const STAGE_COLORS: Record<LeadStage, string> = {
 }
 
 export default function LeadsPage() {
+  const router = useRouter()
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)

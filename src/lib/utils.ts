@@ -2,18 +2,21 @@
 
 /** Format a number as Indian Rupees: ₹1,000 */
 export function formatINR(amount: number): string {
+  const val = Number.isFinite(amount) ? amount : 0
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(val)
 }
 
 /** Format a date string as DD MMM YYYY */
 export function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('en-IN', {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -22,8 +25,10 @@ export function formatDate(dateStr: string | null): string {
 
 /** Format a date string as relative ("2 days ago", "today", etc.) */
 export function relativeDate(dateStr: string): string {
-  const now = new Date()
+  if (!dateStr) return '—'
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return '—'
+  const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
@@ -37,9 +42,11 @@ export function relativeDate(dateStr: string): string {
 /** Check if a follow-up date is overdue */
 export function isOverdue(dateStr: string | null): boolean {
   if (!dateStr) return false
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return false
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  return new Date(dateStr) < today
+  return d < today
 }
 
 /** Check if a follow-up date is today */
@@ -49,15 +56,20 @@ export function isDueToday(dateStr: string | null): boolean {
   return dateStr === today
 }
 
-/** Clean a phone number for wa.me links (strip spaces, dashes, keep +) */
+/** Clean a phone number for wa.me links (strip spaces, dashes, prepend India 91 if 10-digit) */
 export function cleanPhone(phone: string): string {
-  return phone.replace(/[\s\-()]/g, '')
+  let cleaned = phone.replace(/[\s\-()]/g, '')
+  if (cleaned.startsWith('+')) cleaned = cleaned.slice(1)
+  if (/^[6-9]\d{9}$/.test(cleaned)) {
+    cleaned = `91${cleaned}`
+  }
+  return cleaned
 }
 
 /** Build a WhatsApp link with an optional pre-filled message */
 export function waLink(phone: string, message?: string): string {
   const clean = cleanPhone(phone)
-  const base = `https://wa.me/${clean.startsWith('+') ? clean.slice(1) : clean}`
+  const base = `https://wa.me/${clean}`
   return message ? `${base}?text=${encodeURIComponent(message)}` : base
 }
 

@@ -157,7 +157,7 @@ function NewOrderContent() {
   // Calculations
   const itemsSubtotal = items.reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.unit_price) || 0), 0)
   const grandTotal = itemsSubtotal + (Number(deliveryCharge) || 0)
-  const balanceDue = grandTotal - (Number(advanceAmount) || 0)
+  const balanceDue = Math.max(0, grandTotal - (Number(advanceAmount) || 0))
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

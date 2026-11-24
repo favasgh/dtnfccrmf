@@ -70,7 +70,7 @@ async function readLocalFileDB(): Promise<DatabaseSchema> {
   try {
     const data = await fs.readFile(DB_PATH, 'utf-8')
     const parsed = JSON.parse(data)
-    return {
+    const localDB: DatabaseSchema = {
       ...getDefaultDB(),
       ...parsed,
       leads: parsed.leads || [],
@@ -81,6 +81,36 @@ async function readLocalFileDB(): Promise<DatabaseSchema> {
       transactions: parsed.transactions || [],
       settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
     }
+
+    // Auto-sync won leads into customers locally as well
+    let modified = false
+    for (const lead of localDB.leads) {
+      if (lead.stage === 'Won') {
+        const hasCustomer = localDB.customers.some(
+          (c) => c.lead_id === lead.id || (lead.phone && c.phone && c.phone.trim() === lead.phone.trim())
+        )
+        if (!hasCustomer) {
+          localDB.customers.unshift({
+            id: `cust_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            user_id: 'owner',
+            name: lead.name,
+            business_name: lead.business_name || null,
+            phone: lead.phone || null,
+            email: null,
+            address: null,
+            lead_id: lead.id,
+            notes: lead.notes || null,
+            created_at: lead.created_at || new Date().toISOString(),
+          })
+          modified = true
+        }
+      }
+    }
+    if (modified) {
+      await writeLocalFileDB(localDB)
+    }
+
+    return localDB
   } catch {
     const initial = getDefaultDB()
     await writeLocalFileDB(initial)
@@ -109,14 +139,21 @@ async function syncCollection(db: Db, collectionName: string, items: any[]): Pro
   const ids = items.map((it) => it.id)
   await col.deleteMany({ id: { $nin: ids } })
 
-  const ops = items.map((it) => ({
-    updateOne: {
-      filter: { id: it.id },
-      update: { $set: it },
-      upsert: true,
-    },
-  }))
-  await col.bulkWrite(ops)
+  const ops = items.map((it) => {
+    // Strip MongoDB internal _id to avoid "modifying immutable field _id" error
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, ...cleanDoc } = it
+    return {
+      updateOne: {
+        filter: { id: cleanDoc.id },
+        update: { $set: cleanDoc },
+        upsert: true,
+      },
+    }
+  })
+  if (ops.length > 0) {
+    await col.bulkWrite(ops)
+  }
 }
 
 async function writeMongoCollections(db: Db, data: DatabaseSchema): Promise<void> {

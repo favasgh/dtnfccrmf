@@ -520,70 +520,83 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* Totals & Advance & Profit Summary */}
         <div className="grid sm:grid-cols-2 gap-4">
           {/* Totals Breakdown */}
-          <div className="bg-card border border-border rounded-xl p-5 space-y-2 text-xs">
-            <h2 className="text-xs font-semibold text-lime uppercase tracking-wider mb-2">
-              Payment & Totals
-            </h2>
+          {(() => {
+            const liveItemsTotal = items.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
+            const liveGrandTotal = liveItemsTotal + (Number(deliveryCharge) || 0)
+            const liveBalanceDue = Math.max(0, liveGrandTotal - (Number(advanceAmount) || 0))
 
-            <div className="flex justify-between text-muted">
-              <span>Items Total:</span>
-              <span className="text-foreground">{formatINR(order.total_amount || 0)}</span>
-            </div>
+            return (
+              <div className="bg-card border border-border rounded-xl p-5 space-y-2 text-xs">
+                <h2 className="text-xs font-semibold text-lime uppercase tracking-wider mb-2">
+                  Payment & Totals
+                </h2>
 
-            <div className="flex justify-between items-center text-muted">
-              <span>Delivery Charge:</span>
-              <div className="flex items-center gap-1">
-                <span>₹</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={deliveryCharge}
-                  onChange={(e) => setDeliveryCharge(Number(e.target.value) || 0)}
-                  className="w-20 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
-                />
+                <div className="flex justify-between text-muted">
+                  <span>Items Subtotal:</span>
+                  <span className="text-foreground">{formatINR(liveItemsTotal)}</span>
+                </div>
+
+                <div className="flex justify-between items-center text-muted">
+                  <span>Delivery Charge:</span>
+                  <div className="flex items-center gap-1">
+                    <span>₹</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={deliveryCharge}
+                      onChange={(e) => setDeliveryCharge(Number(e.target.value) || 0)}
+                      className="w-20 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between font-semibold text-foreground pt-1 border-t border-border/40">
+                  <span>Total Order Amount:</span>
+                  <span className="text-lime">{formatINR(liveGrandTotal)}</span>
+                </div>
+
+                <div className="flex justify-between items-center text-muted pt-1 border-t border-border/40">
+                  <span>Advance Paid:</span>
+                  <div className="flex items-center gap-1">
+                    <span>₹</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={advanceAmount}
+                      onChange={(e) => setAdvanceAmount(Number(e.target.value) || 0)}
+                      className="w-24 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between font-bold text-sm pt-2 border-t border-border">
+                  <span>Balance Due:</span>
+                  <span className={liveBalanceDue > 0 ? 'text-danger' : 'text-lime'}>
+                    {formatINR(liveBalanceDue)}
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <label className="block text-[11px] text-muted mb-1">Order Notes</label>
+                  <textarea
+                    rows={2}
+                    value={orderNotes}
+                    onChange={(e) => setOrderNotes(e.target.value)}
+                    placeholder="Special instructions or notes..."
+                    className="w-full px-2.5 py-1.5 bg-black border border-border rounded text-xs text-foreground focus:ring-1 focus:ring-lime"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSavePaymentAndNotes}
+                  disabled={savingPayment}
+                  className="w-full mt-2 py-2 bg-lime text-black font-semibold text-xs rounded hover:bg-lime-dark disabled:opacity-50 transition-colors"
+                >
+                  {savingPayment ? 'Saving...' : '💾 Save Payment & Notes'}
+                </button>
               </div>
-            </div>
-
-            <div className="flex justify-between items-center text-muted pt-1 border-t border-border/40">
-              <span>Advance Paid:</span>
-              <div className="flex items-center gap-1">
-                <span>₹</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={advanceAmount}
-                  onChange={(e) => setAdvanceAmount(Number(e.target.value) || 0)}
-                  className="w-24 px-2 py-1 bg-black border border-border rounded text-right text-xs text-foreground focus:ring-1 focus:ring-lime"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-between font-bold text-sm pt-2 border-t border-border">
-              <span>Balance Due:</span>
-              <span className={(order.balance_due || 0) > 0 ? 'text-danger' : 'text-lime'}>
-                {formatINR(order.balance_due || 0)}
-              </span>
-            </div>
-
-            <div className="pt-2">
-              <label className="block text-[11px] text-muted mb-1">Order Notes</label>
-              <textarea
-                rows={2}
-                value={orderNotes}
-                onChange={(e) => setOrderNotes(e.target.value)}
-                placeholder="Special instructions or notes..."
-                className="w-full px-2.5 py-1.5 bg-black border border-border rounded text-xs text-foreground focus:ring-1 focus:ring-lime"
-              />
-            </div>
-
-            <button
-              onClick={handleSavePaymentAndNotes}
-              disabled={savingPayment}
-              className="w-full mt-2 py-2 bg-lime text-black font-semibold text-xs rounded hover:bg-lime-dark disabled:opacity-50 transition-colors"
-            >
-              {savingPayment ? 'Saving...' : '💾 Save Payment & Notes'}
-            </button>
-          </div>
+            )
+          })()}
 
           {/* Business Owner Profit Box (Visible only to you) */}
           <div className="bg-black border border-lime/30 rounded-xl p-5 space-y-2 text-xs flex flex-col justify-between">

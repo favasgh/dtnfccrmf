@@ -25,8 +25,9 @@ export default async function DashboardPage() {
   // 2. Orders summary
   const orders = db.orders.map((o) => {
     const orderItems = db.order_items.filter((it) => it.order_id === o.id)
-    const total_amount = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
-    const balance_due = total_amount + (o.delivery_charge || 0) - (o.advance_amount || 0)
+    const itemsTotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
+    const total_amount = itemsTotal + (o.delivery_charge || 0)
+    const balance_due = Math.max(0, total_amount - (o.advance_amount || 0))
     const profit = orderItems.reduce((sum, it) => {
       const prod = db.products.find((p) => p.id === it.product_id)
       const cost = prod ? prod.my_cost : 0

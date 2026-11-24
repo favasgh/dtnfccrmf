@@ -62,7 +62,11 @@ export async function getCustomers(search?: string): Promise<(Customer & { order
 
   return list.map((c) => {
     const cOrders = db.orders.filter((o) => o.customer_id === c.id && o.status !== 'Cancelled')
-    const total_spent = cOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+    const total_spent = cOrders.reduce((sum, o) => {
+      const oItems = db.order_items.filter((it) => it.order_id === o.id)
+      const itemsTotal = oItems.reduce((s, it) => s + (it.qty * it.unit_price), 0)
+      return sum + itemsTotal + (o.delivery_charge || 0)
+    }, 0)
     return {
       ...c,
       orders_count: cOrders.length,
@@ -78,7 +82,20 @@ export async function getCustomer(id: string): Promise<{
 }> {
   const db = await readDB()
   const customer = db.customers.find((c) => c.id === id) || null
-  const orders = db.orders.filter((o) => o.customer_id === id)
+  const orders = db.orders
+    .filter((o) => o.customer_id === id)
+    .map((o) => {
+      const orderItems = db.order_items.filter((it) => it.order_id === o.id)
+      const itemsTotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
+      const grandTotal = itemsTotal + (o.delivery_charge || 0)
+      const balanceDue = grandTotal - (o.advance_amount || 0)
+      return {
+        ...o,
+        total_amount: grandTotal,
+        balance_due: balanceDue,
+      }
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   const activities = db.activities.filter((a) => a.customer_id === id)
 
   return {
@@ -131,6 +148,14 @@ export async function updateCustomer(id: string, updates: Partial<Customer>) {
 
 export async function deleteCustomer(id: string) {
   const db = await readDB()
+  const cust = db.customers.find((c) => c.id === id)
+  if (cust?.lead_id) {
+    const linkedLead = db.leads.find((l) => l.id === cust.lead_id)
+    if (linkedLead && linkedLead.stage === 'Won') {
+      linkedLead.stage = 'Lost'
+    }
+  }
+
   const custOrders = db.orders.filter((o) => o.customer_id === id)
   const orderIds = custOrders.map((o) => o.id)
   db.order_items = db.order_items.filter((it) => !orderIds.includes(it.order_id))
@@ -139,6 +164,7 @@ export async function deleteCustomer(id: string) {
   db.activities = db.activities.filter((a) => a.customer_id !== id)
   await writeDB(db)
   revalidatePath('/customers')
+  revalidatePath('/leads')
   revalidatePath('/orders')
   revalidatePath('/dashboard')
 }
