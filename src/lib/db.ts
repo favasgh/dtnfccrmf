@@ -189,10 +189,42 @@ export async function readDB(): Promise<DatabaseSchema> {
           db.collection('counters').findOne({ id: 'order_counter' }),
         ])
 
+        const cleanLeads: Lead[] = leads.map(stripMongoId)
+        const cleanCustomers: Customer[] = customers.map(stripMongoId)
+
+        // Ensure all Won leads have a linked customer record
+        let needSync = false
+        for (const lead of cleanLeads) {
+          if (lead.stage === 'Won') {
+            const hasCustomer = cleanCustomers.some(
+              (c) => c.lead_id === lead.id || (lead.phone && c.phone && c.phone.trim() === lead.phone.trim())
+            )
+            if (!hasCustomer) {
+              const newCust: Customer = {
+                id: `cust_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                user_id: 'owner',
+                name: lead.name,
+                business_name: lead.business_name || null,
+                phone: lead.phone || null,
+                email: null,
+                address: null,
+                lead_id: lead.id,
+                notes: lead.notes || null,
+                created_at: lead.created_at || new Date().toISOString(),
+              }
+              cleanCustomers.unshift(newCust)
+              needSync = true
+            }
+          }
+        }
+        if (needSync) {
+          await syncCollection(db, 'customers', cleanCustomers)
+        }
+
         return {
           products: products.map(stripMongoId),
-          leads: leads.map(stripMongoId),
-          customers: customers.map(stripMongoId),
+          leads: cleanLeads,
+          customers: cleanCustomers,
           orders: orders.map(stripMongoId),
           order_items: order_items.map(stripMongoId),
           activities: activities.map(stripMongoId),

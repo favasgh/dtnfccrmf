@@ -160,11 +160,33 @@ export default function CustomersPage() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-foreground text-base">{c.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground text-base">{c.name}</h3>
+                      {c.lead_id && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-lime/15 text-lime border border-lime/40 font-medium">
+                          Won Lead
+                        </span>
+                      )}
+                    </div>
                     {c.business_name && (
                       <p className="text-xs text-muted">{c.business_name}</p>
                     )}
                     {c.phone && <p className="text-xs text-lime font-mono mt-1">{c.phone}</p>}
+                    
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          window.location.href = `/orders/new?customer_id=${c.id}`
+                        }}
+                        className="px-2.5 py-1 bg-lime/10 hover:bg-lime/20 text-lime border border-lime/30 rounded text-xs font-semibold flex items-center gap-1 transition-colors"
+                        title="Create a new order for this customer with full editing"
+                      >
+                        <span>📦</span> + Create Order
+                      </button>
+                    </div>
                   </div>
 
                   <div className="text-right flex flex-col items-end">
@@ -177,7 +199,7 @@ export default function CustomersPage() {
                     <button
                       type="button"
                       onClick={(e) => handleDirectDelete(e, c.id, c.name)}
-                      className="text-muted hover:text-danger text-xs mt-1 p-0.5"
+                      className="text-muted hover:text-danger text-xs mt-2 p-0.5"
                       title="Delete customer"
                     >
                       ✕ Delete

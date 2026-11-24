@@ -79,8 +79,35 @@ export async function createLead(formData: {
     created_at: new Date().toISOString(),
   })
 
+  // If created as Won, automatically create customer record
+  if (newLead.stage === 'Won') {
+    const newCust = {
+      id: `cust_${Date.now()}`,
+      user_id: 'owner',
+      name: newLead.name,
+      business_name: newLead.business_name,
+      phone: newLead.phone,
+      email: null,
+      address: null,
+      lead_id: newLead.id,
+      notes: newLead.notes,
+      created_at: new Date().toISOString(),
+    }
+    db.customers.unshift(newCust)
+    db.activities.unshift({
+      id: `act_${Date.now() + 1}`,
+      user_id: 'owner',
+      customer_id: newCust.id,
+      lead_id: null,
+      type: 'note',
+      text: `Customer created from Won lead (${newLead.name})`,
+      created_at: new Date().toISOString(),
+    })
+  }
+
   await writeDB(db)
   revalidatePath('/leads')
+  revalidatePath('/customers')
   return newLead
 }
 
@@ -88,11 +115,47 @@ export async function updateLead(id: string, updates: Partial<Lead>) {
   const db = await readDB()
   const idx = db.leads.findIndex((l) => l.id === id)
   if (idx !== -1) {
-    db.leads[idx] = { ...db.leads[idx], ...updates }
+    const prev = db.leads[idx]
+    db.leads[idx] = { ...prev, ...updates }
+
+    // If updated to Won, ensure a corresponding customer exists
+    if (updates.stage === 'Won') {
+      const existing = db.customers.find(
+        (c) => c.lead_id === id || (prev.phone && c.phone && c.phone.trim() === prev.phone.trim())
+      )
+      if (!existing) {
+        const newCust = {
+          id: `cust_${Date.now()}`,
+          user_id: 'owner',
+          name: updates.name || prev.name,
+          business_name: updates.business_name !== undefined ? updates.business_name : prev.business_name,
+          phone: updates.phone !== undefined ? updates.phone : prev.phone,
+          email: null,
+          address: null,
+          lead_id: id,
+          notes: updates.notes !== undefined ? updates.notes : prev.notes,
+          created_at: new Date().toISOString(),
+        }
+        db.customers.unshift(newCust)
+        db.activities.unshift({
+          id: `act_${Date.now()}`,
+          user_id: 'owner',
+          customer_id: newCust.id,
+          lead_id: null,
+          type: 'note',
+          text: `Customer created from Won lead (${newCust.name})`,
+          created_at: new Date().toISOString(),
+        })
+      } else if (!existing.lead_id) {
+        existing.lead_id = id
+      }
+    }
+
     await writeDB(db)
   }
   revalidatePath('/leads')
   revalidatePath(`/leads/${id}`)
+  revalidatePath('/customers')
 }
 
 export async function deleteLead(id: string) {
@@ -107,6 +170,18 @@ export async function convertToCustomer(leadId: string): Promise<string> {
   const db = await readDB()
   const lead = db.leads.find((l) => l.id === leadId)
   if (!lead) throw new Error('Lead not found')
+
+  // Check if customer already exists for this lead
+  const existing = db.customers.find(
+    (c) => c.lead_id === leadId || (lead.phone && c.phone && c.phone.trim() === lead.phone.trim())
+  )
+  if (existing) {
+    if (lead.stage !== 'Won') {
+      lead.stage = 'Won'
+      await writeDB(db)
+    }
+    return existing.id
+  }
 
   const newCust = {
     id: `cust_${Date.now()}`,
@@ -138,6 +213,62 @@ export async function convertToCustomer(leadId: string): Promise<string> {
   revalidatePath('/leads')
   revalidatePath('/customers')
   return newCust.id
+}
+
+export async function getWonLeadCustomer(leadId: string): Promise<string | null> {
+  const db = await readDB()
+  const lead = db.leads.find((l) => l.id === leadId)
+  if (!lead) return null
+  const cust = db.customers.find(
+    (c) => c.lead_id === leadId || (lead.phone && c.phone && c.phone.trim() === lead.phone.trim())
+  )
+  return cust ? cust.id : null
+}
+
+export async function convertLeadToOrder(leadId: string): Promise<{ customerId: string; lead: Lead }> {
+  const db = await readDB()
+  const lead = db.leads.find((l) => l.id === leadId)
+  if (!lead) throw new Error('Lead not found')
+
+  lead.stage = 'Won'
+
+  let cust = db.customers.find(
+    (c) => c.lead_id === leadId || (lead.phone && c.phone && c.phone.trim() === lead.phone.trim())
+  )
+
+  if (!cust) {
+    cust = {
+      id: `cust_${Date.now()}`,
+      user_id: 'owner',
+      name: lead.name,
+      business_name: lead.business_name,
+      phone: lead.phone,
+      email: null,
+      address: null,
+      lead_id: lead.id,
+      notes: lead.notes,
+      created_at: new Date().toISOString(),
+    }
+    db.customers.unshift(cust)
+    db.activities.unshift({
+      id: `act_${Date.now()}`,
+      user_id: 'owner',
+      customer_id: cust.id,
+      lead_id: null,
+      type: 'note',
+      text: `Customer created from Won lead (${cust.name})`,
+      created_at: new Date().toISOString(),
+    })
+  } else if (!cust.lead_id) {
+    cust.lead_id = lead.id
+  }
+
+  await writeDB(db)
+  revalidatePath('/leads')
+  revalidatePath('/customers')
+  revalidatePath('/orders')
+
+  return { customerId: cust.id, lead }
 }
 
 export async function getLeadActivities(leadId: string): Promise<Activity[]> {

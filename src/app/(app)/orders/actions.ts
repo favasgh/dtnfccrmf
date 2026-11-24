@@ -203,12 +203,74 @@ export async function deleteOrder(id: string) {
   revalidatePath('/accounts')
 }
 
+export async function updateOrderItem(
+  orderId: string,
+  itemId: string,
+  updates: {
+    description?: string
+    qty?: number
+    unit_price?: number
+    product_id?: string | null
+  }
+) {
+  const db = await readDB()
+  const idx = db.order_items.findIndex((it) => it.id === itemId && it.order_id === orderId)
+  if (idx === -1) throw new Error('Item not found')
+
+  db.order_items[idx] = {
+    ...db.order_items[idx],
+    ...updates,
+  }
+  await writeDB(db)
+  revalidatePath(`/orders/${orderId}`)
+  revalidatePath('/orders')
+  revalidatePath('/dashboard')
+}
+
 export async function removeOrderItem(orderId: string, itemId: string) {
   const db = await readDB()
   db.order_items = db.order_items.filter((it) => it.id !== itemId)
   await writeDB(db)
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/orders')
+}
+
+export async function getLeadDetailsForOrder(leadId: string) {
+  const db = await readDB()
+  const lead = db.leads.find((l) => l.id === leadId)
+  if (!lead) return null
+
+  // Find or create customer
+  let cust = db.customers.find(
+    (c) => c.lead_id === leadId || (lead.phone && c.phone && c.phone.trim() === lead.phone.trim())
+  )
+
+  if (!cust) {
+    cust = {
+      id: `cust_${Date.now()}`,
+      user_id: 'owner',
+      name: lead.name,
+      business_name: lead.business_name,
+      phone: lead.phone,
+      email: null,
+      address: null,
+      lead_id: lead.id,
+      notes: lead.notes,
+      created_at: new Date().toISOString(),
+    }
+    db.customers.unshift(cust)
+    lead.stage = 'Won'
+    await writeDB(db)
+  }
+
+  return {
+    customerId: cust.id,
+    customerName: cust.name,
+    customerBusiness: cust.business_name || '',
+    leadName: lead.name,
+    interestedProduct: lead.interested_product,
+    notes: lead.notes || '',
+  }
 }
 
 export async function getCustomersForOrderSelect() {

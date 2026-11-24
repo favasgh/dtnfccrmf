@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Order, OrderItem, OrderStatus, ORDER_STATUSES, Product, Customer } from '@/lib/types'
 import { formatINR, formatDate } from '@/lib/utils'
-import { getOrder, updateOrder, deleteOrder, addOrderItem, removeOrderItem, getProductsForOrderSelect } from '../actions'
+import { getOrder, updateOrder, deleteOrder, addOrderItem, removeOrderItem, updateOrderItem, getProductsForOrderSelect } from '../actions'
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   'Awaiting Advance': 'bg-amber-950 text-amber-300 border-amber-800',
@@ -43,6 +43,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [newQty, setNewQty] = useState(1)
   const [newPrice, setNewPrice] = useState(0)
   const [addingItem, setAddingItem] = useState(false)
+
+  // Edit Item State
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editDesc, setEditDesc] = useState('')
+  const [editQty, setEditQty] = useState(1)
+  const [editPrice, setEditPrice] = useState(0)
+  const [savingItemEdit, setSavingItemEdit] = useState(false)
 
   // Checklist updates
   const [updatingChecklist, setUpdatingChecklist] = useState(false)
@@ -144,6 +151,38 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       loadData()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Failed to remove')
+    }
+  }
+
+  function handleStartEditItem(it: OrderItem) {
+    setEditingItemId(it.id)
+    setEditDesc(it.description)
+    setEditQty(it.qty)
+    setEditPrice(it.unit_price)
+  }
+
+  function handleCancelEditItem() {
+    setEditingItemId(null)
+  }
+
+  async function handleSaveItemEdit(itemId: string) {
+    if (!editDesc.trim()) {
+      alert('Description is required')
+      return
+    }
+    setSavingItemEdit(true)
+    try {
+      await updateOrderItem(id, itemId, {
+        description: editDesc.trim(),
+        qty: Number(editQty) || 1,
+        unit_price: Number(editPrice) || 0,
+      })
+      setEditingItemId(null)
+      loadData()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update item')
+    } finally {
+      setSavingItemEdit(false)
     }
   }
 
@@ -313,24 +352,99 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {items.map((it) => (
-                  <tr key={it.id}>
-                    <td className="py-2.5 text-foreground font-medium">{it.description}</td>
-                    <td className="py-2.5 text-center text-muted">{it.qty}</td>
-                    <td className="py-2.5 text-right text-muted">{formatINR(it.unit_price)}</td>
-                    <td className="py-2.5 text-right font-semibold text-foreground">
-                      {formatINR(it.qty * it.unit_price)}
-                    </td>
-                    <td className="py-2.5 text-center">
-                      <button
-                        onClick={() => handleRemoveItem(it.id)}
-                        className="text-danger hover:opacity-80 text-xs px-1"
-                      >
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((it) => {
+                  const isEditing = editingItemId === it.id
+                  return (
+                    <tr key={it.id} className={isEditing ? 'bg-black/60' : ''}>
+                      <td className="py-2.5 text-foreground font-medium">
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editDesc}
+                            onChange={(e) => setEditDesc(e.target.value)}
+                            className="w-full px-2 py-1 bg-black border border-lime rounded text-xs text-foreground focus:outline-none"
+                          />
+                        ) : (
+                          it.description
+                        )}
+                      </td>
+                      <td className="py-2.5 text-center text-muted">
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            min={1}
+                            value={editQty}
+                            onChange={(e) => setEditQty(Number(e.target.value))}
+                            className="w-16 px-1.5 py-1 bg-black border border-lime rounded text-xs text-center text-foreground focus:outline-none"
+                          />
+                        ) : (
+                          it.qty
+                        )}
+                      </td>
+                      <td className="py-2.5 text-right text-muted">
+                        {isEditing ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <span>₹</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={editPrice}
+                              onChange={(e) => setEditPrice(Number(e.target.value))}
+                              className="w-24 px-1.5 py-1 bg-black border border-lime rounded text-xs text-right text-foreground focus:outline-none"
+                            />
+                          </div>
+                        ) : (
+                          formatINR(it.unit_price)
+                        )}
+                      </td>
+                      <td className="py-2.5 text-right font-semibold text-foreground">
+                        {isEditing
+                          ? formatINR((Number(editQty) || 0) * (Number(editPrice) || 0))
+                          : formatINR(it.qty * it.unit_price)}
+                      </td>
+                      <td className="py-2.5 text-center">
+                        {isEditing ? (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveItemEdit(it.id)}
+                              disabled={savingItemEdit}
+                              className="px-2 py-0.5 bg-lime text-black font-semibold text-[10px] rounded hover:bg-lime-dark disabled:opacity-50"
+                            >
+                              {savingItemEdit ? '...' : 'Save'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEditItem}
+                              className="px-1.5 py-0.5 bg-card text-muted hover:text-foreground text-[10px] rounded border border-border"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditItem(it)}
+                              className="text-muted hover:text-lime text-xs px-1"
+                              title="Edit item"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(it.id)}
+                              className="text-danger hover:opacity-80 text-xs px-1"
+                              title="Delete item"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

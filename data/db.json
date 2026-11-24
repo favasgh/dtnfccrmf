@@ -108,10 +108,32 @@
       "user_id": "owner"
     }
   ],
-  "customers": [],
+  "customers": [
+    {
+      "id": "cust_1795510732447",
+      "user_id": "owner",
+      "name": "Rashid",
+      "business_name": "Beezy Solutions",
+      "phone": "+917012411774",
+      "email": null,
+      "address": null,
+      "lead_id": "lead_1795508796301",
+      "notes": null,
+      "created_at": "2026-11-24T08:26:36.301Z"
+    }
+  ],
   "orders": [],
   "order_items": [],
   "activities": [
+    {
+      "id": "act_1795509958370",
+      "user_id": "owner",
+      "lead_id": "lead_1795508796301",
+      "customer_id": null,
+      "type": "whatsapp",
+      "text": "Opened WhatsApp with template: default",
+      "created_at": "2026-11-24T08:45:58.370Z"
+    },
     {
       "id": "act_1795508796301",
       "created_at": "2026-11-24T08:26:36.301Z",

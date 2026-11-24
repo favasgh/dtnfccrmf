@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Product } from '@/lib/types'
 import { formatINR } from '@/lib/utils'
-import { createOrder, getCustomersForOrderSelect, getProductsForOrderSelect } from '../actions'
+import { createOrder, getCustomersForOrderSelect, getProductsForOrderSelect, getLeadDetailsForOrder } from '../actions'
 
 interface ItemDraft {
   product_id?: string
@@ -19,10 +19,12 @@ function NewOrderContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedCustomerId = searchParams.get('customer_id') || ''
+  const fromLeadId = searchParams.get('lead_id') || searchParams.get('from_lead') || ''
 
   const [customers, setCustomers] = useState<{ id: string; name: string; business_name: string; phone: string }[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [leadBanner, setLeadBanner] = useState<{ leadName: string; customerName: string } | null>(null)
 
   // Form State
   const [customerId, setCustomerId] = useState(preselectedCustomerId)
@@ -45,9 +47,72 @@ function NewOrderContent() {
           getProductsForOrderSelect(),
         ])
         setCustomers(cList)
-        setProducts(pList as Product[])
-        if (preselectedCustomerId) {
-          setCustomerId(preselectedCustomerId)
+        const prods = pList as Product[]
+        setProducts(prods)
+
+        let targetCustId = preselectedCustomerId
+
+        // If converting from a lead, fetch lead details and auto-populate
+        if (fromLeadId) {
+          const leadInfo = await getLeadDetailsForOrder(fromLeadId)
+          if (leadInfo) {
+            targetCustId = leadInfo.customerId
+            setLeadBanner({
+              leadName: leadInfo.leadName,
+              customerName: leadInfo.customerName,
+            })
+
+            // Refresh customer select if this customer was just auto-created
+            if (!cList.some((c) => c.id === leadInfo.customerId)) {
+              setCustomers((prev) => [
+                {
+                  id: leadInfo.customerId,
+                  name: leadInfo.customerName,
+                  business_name: leadInfo.customerBusiness,
+                  phone: '',
+                },
+                ...prev,
+              ])
+            }
+
+            // Pre-fill notes if available
+            if (leadInfo.notes) {
+              setNotes(leadInfo.notes)
+            }
+
+            // Pre-fill item from interested product
+            if (leadInfo.interestedProduct) {
+              const matchedProd = prods.find(
+                (p) =>
+                  p.name.toLowerCase() === leadInfo.interestedProduct?.toLowerCase() ||
+                  leadInfo.interestedProduct?.toLowerCase().includes(p.name.toLowerCase()) ||
+                  p.name.toLowerCase().includes(leadInfo.interestedProduct?.toLowerCase() || '')
+              )
+
+              if (matchedProd) {
+                setItems([
+                  {
+                    product_id: matchedProd.id,
+                    description: matchedProd.name,
+                    qty: 1,
+                    unit_price: matchedProd.price,
+                  },
+                ])
+              } else {
+                setItems([
+                  {
+                    description: leadInfo.interestedProduct,
+                    qty: 1,
+                    unit_price: 0,
+                  },
+                ])
+              }
+            }
+          }
+        }
+
+        if (targetCustId) {
+          setCustomerId(targetCustId)
         } else if (cList.length > 0) {
           setCustomerId(cList[0].id)
         }
@@ -56,7 +121,7 @@ function NewOrderContent() {
       }
     }
     loadSelects()
-  }, [preselectedCustomerId])
+  }, [preselectedCustomerId, fromLeadId])
 
   function handleProductSelect(index: number, productId: string) {
     const prod = products.find((p) => p.id === productId)
@@ -144,6 +209,23 @@ function NewOrderContent() {
       {errorMsg && (
         <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded-lg text-xs">
           {errorMsg}
+        </div>
+      )}
+
+      {leadBanner && (
+        <div className="p-3.5 bg-lime/10 border border-lime/40 rounded-xl flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🏆</span>
+            <div>
+              <p className="font-semibold text-lime">Converting Won Lead to Order</p>
+              <p className="text-muted">
+                Pre-filled from lead <span className="text-foreground font-medium">{leadBanner.leadName}</span> (Customer: <span className="text-foreground font-medium">{leadBanner.customerName}</span>). Edit any field below as needed!
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] bg-black/40 text-lime px-2 py-1 rounded font-mono shrink-0">
+            Edit Mode
+          </span>
         </div>
       )}
 

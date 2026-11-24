@@ -11,6 +11,7 @@ import {
   updateLead,
   deleteLead,
   convertToCustomer,
+  getWonLeadCustomer,
   getLeadActivities,
   addLeadActivity,
 } from '../actions'
@@ -21,6 +22,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const { id } = use(params)
   const router = useRouter()
   const [lead, setLead] = useState<Lead | null>(null)
+  const [linkedCustomerId, setLinkedCustomerId] = useState<string | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [templates, setTemplates] = useState<WhatsAppTemplate[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -75,14 +77,16 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       setObjection(l.objection || '')
       setProduct(l.interested_product || '')
 
-      const [acts, tpls, prods] = await Promise.all([
+      const [acts, tpls, prods, linkedCust] = await Promise.all([
         getLeadActivities(id),
         getWhatsAppTemplates(),
         getProducts(),
+        getWonLeadCustomer(id),
       ])
       setActivities(acts)
       if (tpls) setTemplates(tpls as WhatsAppTemplate[])
       if (prods) setProducts(prods as Product[])
+      setLinkedCustomerId(linkedCust)
     } finally {
       setLoading(false)
     }
@@ -238,17 +242,32 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           <Link href="/leads" className="text-xs text-muted hover:text-foreground flex items-center gap-1">
             ← Back to Leads
           </Link>
-          <div className="flex gap-2">
-            {stage !== 'Won' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push(`/orders/new?from_lead=${id}`)}
+              className="px-3.5 py-1.5 bg-lime text-black text-xs font-semibold rounded-lg hover:bg-lime-dark flex items-center gap-1.5 shadow"
+              title="Convert this lead to an order with full editing options"
+            >
+              <span>📦</span> Convert to Order
+            </button>
+            {linkedCustomerId ? (
+              <Link
+                href={`/customers/${linkedCustomerId}`}
+                className="px-3 py-1.5 bg-card border border-border text-foreground hover:border-lime/40 text-xs font-semibold rounded-lg flex items-center gap-1"
+              >
+                <span>👤</span> View Customer
+              </Link>
+            ) : stage !== 'Won' ? (
               <button
                 type="button"
                 onClick={handleConvertToCustomer}
                 disabled={converting}
-                className="px-3 py-1.5 bg-lime text-black text-xs font-semibold rounded-lg hover:bg-lime-dark disabled:opacity-50"
+                className="px-3 py-1.5 bg-card border border-border text-foreground hover:bg-card-hover text-xs font-semibold rounded-lg disabled:opacity-50"
               >
                 {converting ? 'Converting...' : 'Convert to Customer'}
               </button>
-            )}
+            ) : null}
             <button
               type="button"
               onClick={handleDeleteLead}

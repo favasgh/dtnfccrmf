@@ -6,6 +6,48 @@ import { readDB, writeDB } from '@/lib/db'
 
 export async function getCustomers(search?: string): Promise<(Customer & { orders_count?: number; total_spent?: number })[]> {
   const db = await readDB()
+
+  // Auto-sync won leads into customers if not already present
+  let modified = false
+  const wonLeads = db.leads.filter((l) => l.stage === 'Won')
+  for (const lead of wonLeads) {
+    const existing = db.customers.find(
+      (c) => c.lead_id === lead.id || (lead.phone && c.phone && c.phone.trim() === lead.phone.trim())
+    )
+    if (!existing) {
+      const newCust: Customer = {
+        id: `cust_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        user_id: 'owner',
+        name: lead.name,
+        business_name: lead.business_name,
+        phone: lead.phone,
+        email: null,
+        address: null,
+        lead_id: lead.id,
+        notes: lead.notes,
+        created_at: lead.created_at || new Date().toISOString(),
+      }
+      db.customers.unshift(newCust)
+      db.activities.unshift({
+        id: `act_${Date.now()}`,
+        user_id: 'owner',
+        customer_id: newCust.id,
+        lead_id: null,
+        type: 'note',
+        text: `Customer auto-synced from Won lead (${lead.name})`,
+        created_at: new Date().toISOString(),
+      })
+      modified = true
+    } else if (!existing.lead_id) {
+      existing.lead_id = lead.id
+      modified = true
+    }
+  }
+
+  if (modified) {
+    await writeDB(db)
+  }
+
   let list = [...db.customers]
 
   if (search?.trim()) {

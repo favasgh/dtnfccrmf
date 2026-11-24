@@ -183,6 +183,19 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Customer Info Card */}
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-border">
+            <span className="text-xs font-semibold text-lime uppercase tracking-wider">
+              Customer Details
+            </span>
+            {customer.lead_id && (
+              <Link
+                href={`/leads/${customer.lead_id}`}
+                className="text-xs text-lime hover:underline flex items-center gap-1 font-medium bg-lime/10 px-2 py-0.5 rounded border border-lime/30"
+              >
+                <span>🏆</span> Converted from Won Lead
+              </Link>
+            )}
+          </div>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-muted mb-1">Name</label>
