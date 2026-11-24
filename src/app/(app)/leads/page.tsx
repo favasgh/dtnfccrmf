@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
-import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES } from '@/lib/types'
+import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES, Product } from '@/lib/types'
 import { formatDate, isOverdue, isDueToday } from '@/lib/utils'
 import { getLeads, createLead, deleteLead, importLeadsFromCsv } from './actions'
+import { getProducts } from '../products/actions'
 
 const STAGE_COLORS: Record<LeadStage, string> = {
   New: 'bg-gray-800 text-gray-300 border-gray-700',
@@ -26,6 +27,7 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('')
   const [stageFilter, setStageFilter] = useState('ALL')
   const [sourceFilter, setSourceFilter] = useState('ALL')
+  const [products, setProducts] = useState<Product[]>([])
 
   // Quick Add Modal
   const [showAddModal, setShowAddModal] = useState(false)
@@ -46,12 +48,16 @@ export default function LeadsPage() {
   async function loadData() {
     setLoading(true)
     try {
-      const data = await getLeads({
-        stage: stageFilter,
-        source: sourceFilter,
-        search,
-      })
+      const [data, prods] = await Promise.all([
+        getLeads({
+          stage: stageFilter,
+          source: sourceFilter,
+          search,
+        }),
+        getProducts(),
+      ])
       setLeads(data)
+      setProducts(prods)
     } finally {
       setLoading(false)
     }
@@ -446,15 +452,32 @@ export default function LeadsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted mb-1">Interested Product</label>
-                    <input
-                      type="text"
+                    <label className="block text-xs text-muted mb-1">Interested Product / Service</label>
+                    <select
                       value={newProduct}
                       onChange={(e) => setNewProduct(e.target.value)}
-                      placeholder="e.g. Classic Pro"
                       className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-lime"
                     >
-                    </input>
+                      <option value="">-- Select Product / Service --</option>
+                      <optgroup label="NFC Cards">
+                        {products
+                          .filter((p) => p.category === 'card' && p.active)
+                          .map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name} (₹{p.price})
+                            </option>
+                          ))}
+                      </optgroup>
+                      <optgroup label="Services">
+                        {products
+                          .filter((p) => p.category === 'service' && p.active)
+                          .map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name} (₹{p.price})
+                            </option>
+                          ))}
+                      </optgroup>
+                    </select>
                   </div>
                 </div>
 

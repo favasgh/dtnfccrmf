@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
-import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES, Activity, WhatsAppTemplate } from '@/lib/types'
+import { Lead, LeadStage, LeadSource, LEAD_STAGES, LEAD_SOURCES, Activity, WhatsAppTemplate, Product } from '@/lib/types'
 import { waLink, fillTemplate, relativeDate } from '@/lib/utils'
 import {
   getLead,
@@ -15,6 +15,7 @@ import {
   addLeadActivity,
 } from '../actions'
 import { getWhatsAppTemplates } from '../../settings/actions'
+import { getProducts } from '../../products/actions'
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -22,6 +23,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [lead, setLead] = useState<Lead | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [templates, setTemplates] = useState<WhatsAppTemplate[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [converting, setConverting] = useState(false)
@@ -64,11 +66,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       setObjection(l.objection || '')
       setProduct(l.interested_product || '')
 
-      const acts = await getLeadActivities(id)
+      const [acts, tpls, prods] = await Promise.all([
+        getLeadActivities(id),
+        getWhatsAppTemplates(),
+        getProducts(),
+      ])
       setActivities(acts)
-
-      const tpls = await getWhatsAppTemplates()
       if (tpls) setTemplates(tpls as WhatsAppTemplate[])
+      if (prods) setProducts(prods as Product[])
     } finally {
       setLoading(false)
     }
@@ -365,14 +370,35 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               </div>
 
               <div>
-                <label className="block text-xs text-muted mb-1">Interested Product</label>
-                <input
-                  type="text"
+                <label className="block text-xs text-muted mb-1">Interested Product / Service</label>
+                <select
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
-                  placeholder="e.g. Signature Pro"
                   className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
-                />
+                >
+                  <option value="">-- Select Product or Service --</option>
+                  {product && !products.some((p) => p.name === product) && (
+                    <option value={product}>{product}</option>
+                  )}
+                  <optgroup label="NFC Cards">
+                    {products
+                      .filter((p) => p.category === 'card' && p.active)
+                      .map((p) => (
+                        <option key={p.id} value={p.name}>
+                          {p.name} (₹{p.price})
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="Services">
+                    {products
+                      .filter((p) => p.category === 'service' && p.active)
+                      .map((p) => (
+                        <option key={p.id} value={p.name}>
+                          {p.name} (₹{p.price})
+                        </option>
+                      ))}
+                  </optgroup>
+                </select>
               </div>
 
               <div>
