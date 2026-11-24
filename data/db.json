@@ -91,50 +91,11 @@
       "created_at": "2026-11-23T11:40:42.761Z"
     }
   ],
-  "leads": [
-    {
-      "id": "lead_1",
-      "user_id": "owner",
-      "name": "Rahul Sharma",
-      "business_name": "Calicut Motors",
-      "business_type": "Automobile",
-      "phone": "+91 9876543210",
-      "source": "instagram",
-      "stage": "Interested",
-      "interested_product": "Signature Pro",
-      "objection": null,
-      "notes": "Interested in NFC cards for showroom staff",
-      "next_follow_up_date": "2026-11-23",
-      "created_at": "2026-11-23T11:40:42.761Z"
-    }
-  ],
-  "customers": [
-    {
-      "id": "cust_1",
-      "user_id": "owner",
-      "name": "Asif Ali",
-      "business_name": "Malabar Roasters",
-      "phone": "+91 8304830149",
-      "email": "asif@malabar.com",
-      "address": "SM Street, Calicut, Kerala",
-      "lead_id": null,
-      "notes": "Premium client",
-      "created_at": "2026-11-23T11:40:42.761Z"
-    }
-  ],
+  "leads": [],
+  "customers": [],
   "orders": [],
   "order_items": [],
-  "activities": [
-    {
-      "id": "act_1",
-      "user_id": "owner",
-      "lead_id": "lead_1",
-      "customer_id": null,
-      "type": "note",
-      "text": "Initial contact via Instagram direct message",
-      "created_at": "2026-11-23T11:40:42.761Z"
-    }
-  ],
+  "activities": [],
   "settings": {
     "business_name": "Double Tap NFC",
     "business_phone": "+91 8304830149",
@@ -165,5 +126,6 @@
       "created_at": "2026-11-23T11:40:42.761Z"
     }
   ],
+  "transactions": [],
   "order_counter": 0
 }
