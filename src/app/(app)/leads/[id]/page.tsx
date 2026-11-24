@@ -34,7 +34,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [businessName, setBusinessName] = useState('')
   const [businessType, setBusinessType] = useState('')
   const [phone, setPhone] = useState('')
-  const [source, setSource] = useState<LeadSource>('other')
+  const [sourceCategory, setSourceCategory] = useState<string>('Instagram')
+  const [sourceDetail, setSourceDetail] = useState<string>('')
   const [stage, setStage] = useState<LeadStage>('New')
   const [nextFollowUp, setNextFollowUp] = useState('')
   const [notes, setNotes] = useState('')
@@ -59,7 +60,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       setBusinessName(l.business_name || '')
       setBusinessType(l.business_type || '')
       setPhone(l.phone || '')
-      setSource(l.source || 'other')
+      const s = l.source || ''
+      const match = s.match(/^([^(]+)\s*\((.+)\)$/)
+      if (match) {
+        setSourceCategory(match[1].trim())
+        setSourceDetail(match[2].trim())
+      } else {
+        setSourceCategory(s || 'Instagram')
+        setSourceDetail('')
+      }
       setStage(l.stage)
       setNextFollowUp(l.next_follow_up_date || '')
       setNotes(l.notes || '')
@@ -105,12 +114,18 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     setSaving(true)
     setMsg('')
     try {
+      const effectiveSource = sourceDetail.trim()
+        ? sourceCategory === 'Other'
+          ? sourceDetail.trim()
+          : `${sourceCategory} (${sourceDetail.trim()})`
+        : sourceCategory
+
       await updateLead(id, {
         name: name.trim(),
         business_name: businessName.trim() || null,
         business_type: businessType.trim() || null,
         phone: phone.trim() || null,
-        source,
+        source: effectiveSource,
         stage,
         next_follow_up_date: nextFollowUp || null,
         notes: notes.trim() || null,
@@ -345,25 +360,35 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               </div>
 
               <div>
-                <label className="block text-xs text-muted mb-1">Lead Source</label>
+                <label className="block text-xs text-muted mb-1">Lead Source (Dropdown)</label>
+                <select
+                  value={sourceCategory}
+                  onChange={(e) => setSourceCategory(e.target.value)}
+                  className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
+                >
+                  <option value="Instagram">Instagram</option>
+                  <option value="Google Maps">Google Maps</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Meta Ads">Meta Ads</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Printo Referral">Printo Referral</option>
+                  <option value="Event / Expo">Event / Expo</option>
+                  <option value="Other">Other / Custom</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs text-muted mb-1">
+                  Additional Source Details (Text Box)
+                </label>
                 <input
                   type="text"
-                  list="lead-source-detail-options"
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  placeholder="e.g. Instagram, Referral, Walk-in..."
+                  value={sourceDetail}
+                  onChange={(e) => setSourceDetail(e.target.value)}
+                  placeholder="e.g. Referred by Rahul, Instagram DM, Expo Stall #4..."
                   className="w-full px-3 py-2 bg-black border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-lime"
                 />
-                <datalist id="lead-source-detail-options">
-                  <option value="Instagram" />
-                  <option value="Google Maps" />
-                  <option value="Walk-in" />
-                  <option value="Referral" />
-                  <option value="Meta Ads" />
-                  <option value="WhatsApp" />
-                  <option value="Printo Referral" />
-                  <option value="Event / Expo" />
-                </datalist>
               </div>
 
               <div>

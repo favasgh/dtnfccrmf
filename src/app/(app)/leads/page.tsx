@@ -35,6 +35,7 @@ export default function LeadsPage() {
   const [newBiz, setNewBiz] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [newSource, setNewSource] = useState<string>('Instagram')
+  const [newSourceDetail, setNewSourceDetail] = useState<string>('')
   const [newProduct, setNewProduct] = useState('')
   const [newNotes, setNewNotes] = useState('')
   const [creating, setCreating] = useState(false)
@@ -77,11 +78,17 @@ export default function LeadsPage() {
     if (!newName.trim()) return
     setCreating(true)
     try {
+      const effectiveSource = newSourceDetail.trim()
+        ? newSource === 'Other'
+          ? newSourceDetail.trim()
+          : `${newSource} (${newSourceDetail.trim()})`
+        : newSource
+
       const created = await createLead({
         name: newName.trim(),
         business_name: newBiz.trim() || undefined,
         phone: newPhone.trim() || undefined,
-        source: newSource,
+        source: effectiveSource,
         interested_product: newProduct.trim() || undefined,
         notes: newNotes.trim() || undefined,
       })
@@ -94,6 +101,8 @@ export default function LeadsPage() {
       setNewPhone('')
       setNewNotes('')
       setNewProduct('')
+      setNewSource('Instagram')
+      setNewSourceDetail('')
       setStageFilter('ALL')
       setSourceFilter('ALL')
       setSearch('')
@@ -438,25 +447,22 @@ export default function LeadsPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-muted mb-1">Source</label>
-                    <input
-                      type="text"
-                      list="lead-source-modal-options"
+                    <label className="block text-xs text-muted mb-1">Source (Dropdown)</label>
+                    <select
                       value={newSource}
                       onChange={(e) => setNewSource(e.target.value)}
-                      placeholder="e.g. Instagram, Referral, Walk-in..."
                       className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-lime"
-                    />
-                    <datalist id="lead-source-modal-options">
-                      <option value="Instagram" />
-                      <option value="Google Maps" />
-                      <option value="Walk-in" />
-                      <option value="Referral" />
-                      <option value="Meta Ads" />
-                      <option value="WhatsApp" />
-                      <option value="Printo Referral" />
-                      <option value="Event / Expo" />
-                    </datalist>
+                    >
+                      <option value="Instagram">Instagram</option>
+                      <option value="Google Maps">Google Maps</option>
+                      <option value="Referral">Referral</option>
+                      <option value="Walk-in">Walk-in</option>
+                      <option value="Meta Ads">Meta Ads</option>
+                      <option value="WhatsApp">WhatsApp</option>
+                      <option value="Printo Referral">Printo Referral</option>
+                      <option value="Event / Expo">Event / Expo</option>
+                      <option value="Other">Other / Custom</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs text-muted mb-1">Interested Product / Service</label>
@@ -486,6 +492,19 @@ export default function LeadsPage() {
                       </optgroup>
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-muted mb-1">
+                    Source Details / Specifics (Additional Text Box)
+                  </label>
+                  <input
+                    type="text"
+                    value={newSourceDetail}
+                    onChange={(e) => setNewSourceDetail(e.target.value)}
+                    placeholder="e.g. Referred by Rahul, Instagram DM, Expo Stall #4..."
+                    className="w-full px-3 py-2 rounded-lg bg-black border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-lime"
+                  />
                 </div>
 
                 <div>
