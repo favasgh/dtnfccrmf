@@ -111,12 +111,28 @@ export async function deleteTransaction(id: string) {
   revalidatePath('/dashboard')
 }
 
+export interface SalesSummaryItem {
+  id: string
+  order_no: string
+  customer_name: string
+  customer_business?: string
+  order_date: string
+  status: string
+  total_amount: number
+  advance_amount: number
+  balance_due: number
+  balance_received: boolean
+  items_summary: string
+}
+
 export async function getFinancialSummary() {
   const db = await readDB()
 
-  // 1. Order cash collected (advances + balances paid)
+  let totalSales = 0
+  let totalOrdersCount = 0
   let orderCashInflow = 0
   let pendingReceivables = 0
+  const salesOrders: SalesSummaryItem[] = []
 
   db.orders.forEach((o) => {
     if (o.status === 'Cancelled') return
@@ -124,15 +140,39 @@ export async function getFinancialSummary() {
     const itemsTotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
     const grandTotal = Math.max(0, itemsTotal + (o.delivery_charge || 0) - (o.discount || 0))
     const advance = o.advance_amount || 0
-    const balance = Math.max(0, grandTotal - advance)
+    const isClosedOrReceived = o.status === 'Closed' || Boolean(o.balance_received)
+    const balance = isClosedOrReceived ? 0 : Math.max(0, grandTotal - advance)
 
-    if (o.balance_received || o.status === 'Closed') {
+    totalSales += grandTotal
+    totalOrdersCount += 1
+
+    if (isClosedOrReceived) {
       orderCashInflow += grandTotal
     } else {
       orderCashInflow += advance
       pendingReceivables += balance
     }
+
+    const cust = db.customers.find((c) => c.id === o.customer_id)
+    const itemsDesc = orderItems.map((it) => `${it.qty}x ${it.description}`).join(', ')
+
+    salesOrders.push({
+      id: o.id,
+      order_no: o.order_no,
+      customer_name: cust?.name || 'Customer',
+      customer_business: cust?.business_name || undefined,
+      order_date: o.order_date,
+      status: o.status,
+      total_amount: grandTotal,
+      advance_amount: advance,
+      balance_due: balance,
+      balance_received: isClosedOrReceived,
+      items_summary: itemsDesc || 'Card Order',
+    })
   })
+
+  // Sort sales orders newest first
+  salesOrders.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime())
 
   // 2. Direct transactions
   const txs = db.transactions || []
@@ -153,6 +193,8 @@ export async function getFinancialSummary() {
   })
 
   return {
+    totalSales,
+    totalOrdersCount,
     orderCashInflow,
     directIncome,
     totalInflow,
@@ -160,5 +202,6 @@ export async function getFinancialSummary() {
     netCashFlow,
     pendingReceivables,
     categoryBreakdown,
+    salesOrders,
   }
 }
