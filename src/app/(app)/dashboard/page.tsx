@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
-import { formatINR, formatDate, isOverdue, isDueToday, waLink } from '@/lib/utils'
+import { formatDate, isOverdue, isDueToday, waLink } from '@/lib/utils'
 import { readDB } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -24,36 +24,18 @@ export default async function DashboardPage() {
 
   // 2. Orders summary
   const orders = db.orders.map((o) => {
-    const orderItems = db.order_items.filter((it) => it.order_id === o.id)
-    const itemsTotal = orderItems.reduce((sum, it) => sum + (it.qty * it.unit_price), 0)
-    const total_amount = Math.max(0, itemsTotal + (o.delivery_charge || 0) - (o.discount || 0))
-    const isClosedOrReceived = o.status === 'Closed' || Boolean(o.balance_received)
-    const balance_due = isClosedOrReceived ? 0 : Math.max(0, total_amount - (o.advance_amount || 0))
-    const profit = orderItems.reduce((sum, it) => {
-      const prod = db.products.find((p) => p.id === it.product_id)
-      const cost = prod ? prod.my_cost : 0
-      return sum + (it.qty * (it.unit_price - cost))
-    }, 0) - (o.discount || 0)
     const customer = db.customers.find((c) => c.id === o.customer_id)
     return {
       ...o,
-      balance_received: isClosedOrReceived,
-      total_amount,
-      balance_due,
-      profit,
       customer: customer ? { name: customer.name, business_name: customer.business_name || '', phone: customer.phone || '' } : undefined,
     }
   })
 
-  const unpaidOrders = orders.filter((o) => o.status !== 'Cancelled' && o.status !== 'Closed' && (o.balance_due || 0) > 0)
-  const totalUnpaidBalances = unpaidOrders.reduce((sum, o) => sum + (o.balance_due || 0), 0)
   const recentOrders = orders.filter((o) => o.status !== 'Cancelled').slice(0, 5)
 
   const now = new Date()
   const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const thisMonthOrders = orders.filter((o) => o.order_date?.startsWith(currentYearMonth) && o.status !== 'Cancelled')
-  const thisMonthSales = thisMonthOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
-  const thisMonthProfit = thisMonthOrders.reduce((sum, o) => sum + (o.profit || 0), 0)
 
   return (
     <>
@@ -61,41 +43,38 @@ export default async function DashboardPage() {
       <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
         {/* Metric Cards (Grid) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Month Sales */}
-          <div className="p-4 bg-card border border-border rounded-xl">
-            <span className="text-xs text-muted font-medium block">This Month Sales</span>
+          {/* Active Orders */}
+          <Link href="/orders" className="p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors block">
+            <span className="text-xs text-muted font-medium block">Active Orders</span>
             <span className="text-2xl font-bold text-lime font-mono block mt-1">
-              {formatINR(thisMonthSales)}
+              {orders.filter((o) => o.status !== 'Cancelled' && o.status !== 'Closed').length}
             </span>
             <span className="text-[10px] text-muted block mt-1">
-              {thisMonthOrders.length} order{thisMonthOrders.length === 1 ? '' : 's'}
+              {thisMonthOrders.length} order{thisMonthOrders.length === 1 ? '' : 's'} this month
             </span>
-          </div>
+          </Link>
 
-          {/* Month Profit */}
-          <div className="p-4 bg-black border border-lime/30 rounded-xl">
-            <span className="text-xs text-lime font-medium flex items-center gap-1">
-              <span>🔒</span> This Month Profit
-            </span>
-            <span className="text-2xl font-bold text-lime font-mono block mt-1">
-              {formatINR(thisMonthProfit)}
+          {/* Active Leads */}
+          <Link href="/leads" className="p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors block">
+            <span className="text-xs text-muted font-medium block">Active Leads</span>
+            <span className="text-2xl font-bold text-foreground font-mono block mt-1">
+              {activeLeads.length}
             </span>
             <span className="text-[10px] text-muted block mt-1">
-              Margin: {thisMonthSales > 0 ? `${((thisMonthProfit / thisMonthSales) * 100).toFixed(0)}%` : '0%'}
+              In sales pipeline
             </span>
-          </div>
+          </Link>
 
-          {/* Unpaid Balances */}
-          <div className="p-4 bg-card border border-border rounded-xl">
-            <span className="text-xs text-muted font-medium block">Unpaid Balances</span>
+          {/* Follow-ups Due */}
+          <div className="p-4 bg-card border border-border rounded-xl block">
+            <span className="text-xs text-muted font-medium block">Follow-ups Due</span>
             <span
-              className={`text-2xl font-bold font-mono block mt-1 ${totalUnpaidBalances > 0 ? 'text-danger' : 'text-foreground'
-                }`}
+              className={`text-2xl font-bold font-mono block mt-1 ${followUpsDue.length > 0 ? 'text-warning' : 'text-foreground'}`}
             >
-              {formatINR(totalUnpaidBalances)}
+              {followUpsDue.length}
             </span>
             <span className="text-[10px] text-muted block mt-1">
-              {unpaidOrders.length} order{unpaidOrders.length === 1 ? '' : 's'} pending
+              {followUpsDue.length === 0 ? 'All caught up 🎉' : 'Due today or overdue'}
             </span>
           </div>
         </div>
@@ -206,8 +185,8 @@ export default async function DashboardPage() {
                       <span className="text-muted block text-xs mt-0.5">{o.customer?.name}</span>
                       <span className="block text-[10px] text-muted mt-0.5">{formatDate(o.order_date)}</span>
                     </div>
-                    <span className="font-bold text-lime font-mono">
-                      {formatINR(o.total_amount || 0)}
+                    <span className="text-muted hover:text-lime text-[11px] font-semibold flex items-center gap-1 transition-colors">
+                      View →
                     </span>
                   </Link>
                 ))}
@@ -244,46 +223,6 @@ export default async function DashboardPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Recent Orders */}
-        <div className="bg-card border border-border rounded-xl p-4 md:p-5 space-y-3">
-          <div className="flex justify-between items-center">
-            <h2 className="text-sm font-bold text-foreground">Recent Orders</h2>
-            <Link href="/orders" className="text-xs text-lime hover:underline">
-              All Orders →
-            </Link>
-          </div>
-
-          {orders.length === 0 ? (
-            <p className="text-xs text-muted py-4 text-center">No orders recorded yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {orders.slice(0, 5).map((o) => (
-                <Link
-                  key={o.id}
-                  href={`/orders/${o.id}`}
-                  className="p-3 bg-black/50 border border-border rounded-lg flex justify-between items-center hover:border-lime/40 transition-colors text-xs"
-                >
-                  <div>
-                    <span className="font-mono font-bold text-foreground mr-2">{o.order_no}</span>
-                    <span className="text-muted">{o.customer?.name}</span>
-                    <span className="text-[10px] text-muted block sm:inline sm:ml-2">
-                      {formatDate(o.order_date)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-card border border-border text-foreground">
-                      {o.status}
-                    </span>
-                    <span className="font-bold text-foreground font-mono">
-                      {formatINR(o.total_amount || 0)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </>
