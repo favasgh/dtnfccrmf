@@ -4,12 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { Lead, LeadStage, LeadSource, Activity } from '@/lib/types'
 import { readDB, writeDB } from '@/lib/db'
 
-export async function getLeads(filters?: {
-  stage?: string
-  source?: string
-  search?: string
-}): Promise<Lead[]> {
-  const db = await readDB()
+export async function getLeads(
+  filters?: {
+    stage?: string
+    source?: string
+    search?: string
+  },
+  forceFresh = false
+): Promise<Lead[]> {
+  const db = await readDB(forceFresh)
   console.log('[getLeads] Total leads in db schema:', db.leads.length, 'Filter stage:', filters?.stage)
   let list = [...db.leads]
 

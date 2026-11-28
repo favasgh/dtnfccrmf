@@ -4,8 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { Customer, Activity, Order } from '@/lib/types'
 import { readDB, writeDB } from '@/lib/db'
 
-export async function getCustomers(search?: string): Promise<(Customer & { orders_count?: number; total_spent?: number })[]> {
-  const db = await readDB()
+export async function getCustomers(search?: string, forceFresh = false): Promise<(Customer & { orders_count?: number; total_spent?: number })[]> {
+  const db = await readDB(forceFresh)
 
   // Auto-sync won leads into customers if not already present
   let modified = false

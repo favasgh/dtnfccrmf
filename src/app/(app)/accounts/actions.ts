@@ -4,13 +4,16 @@ import { revalidatePath } from 'next/cache'
 import { Transaction, TransactionType } from '@/lib/types'
 import { readDB, writeDB } from '@/lib/db'
 
-export async function getTransactions(filters?: {
-  type?: string
-  category?: string
-  payment_method?: string
-  search?: string
-}): Promise<Transaction[]> {
-  const db = await readDB()
+export async function getTransactions(
+  filters?: {
+    type?: string
+    category?: string
+    payment_method?: string
+    search?: string
+  },
+  forceFresh = false
+): Promise<Transaction[]> {
+  const db = await readDB(forceFresh)
   let list = [...(db.transactions || [])]
 
   if (filters?.type && filters.type !== 'ALL') {
@@ -135,8 +138,8 @@ export interface SalesSummaryItem {
   items_summary: string
 }
 
-export async function getFinancialSummary() {
-  const db = await readDB()
+export async function getFinancialSummary(forceFresh = false) {
+  const db = await readDB(forceFresh)
 
   let totalSales = 0
   let totalOrdersCount = 0

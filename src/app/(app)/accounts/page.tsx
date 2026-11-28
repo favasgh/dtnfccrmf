@@ -86,18 +86,21 @@ export default function AccountsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  async function loadData(silent = false) {
+  async function loadData(silent = false, forceFresh = false) {
     if (!silent) setLoading(true)
     else setRefreshing(true)
     try {
       const [txList, sum] = await Promise.all([
-        getTransactions({
-          type: typeFilter,
-          category: categoryFilter,
-          payment_method: paymentMethodFilter,
-          search,
-        }),
-        getFinancialSummary(),
+        getTransactions(
+          {
+            type: typeFilter,
+            category: categoryFilter,
+            payment_method: paymentMethodFilter,
+            search,
+          },
+          forceFresh
+        ),
+        getFinancialSummary(forceFresh),
       ])
       setTransactions(txList)
       setSummary(sum)
@@ -113,8 +116,10 @@ export default function AccountsPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      loadData(true)
-    }, 6000)
+      if (document.visibilityState === 'visible') {
+        loadData(true)
+      }
+    }, 45000)
 
     const handleFocus = () => loadData(true)
     window.addEventListener('focus', handleFocus)
@@ -411,10 +416,10 @@ export default function AccountsPage() {
 
             <div className="flex gap-2">
               <button
-                onClick={() => loadData(true)}
+                onClick={() => loadData(true, true)}
                 disabled={refreshing}
                 className="px-3 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground flex items-center justify-center"
-                title="Sync with cloud"
+                title="Sync fresh from cloud"
               >
                 <span className={`inline-block text-xs ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
               </button>

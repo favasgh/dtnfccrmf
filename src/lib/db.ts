@@ -184,7 +184,7 @@ declare global {
   var _dtDbCache: { data: DatabaseSchema; timestamp: number } | undefined
 }
 
-const CACHE_TTL_MS = 2500 // 2.5 second in-memory cache collapses redundant parallel calls into 0ms
+const CACHE_TTL_MS = 30000 // 30-second in-memory cache makes page navigation and reloads instant (0ms)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function stripMongoId(doc: any) {
@@ -194,9 +194,9 @@ function stripMongoId(doc: any) {
   return clean
 }
 
-export async function readDB(): Promise<DatabaseSchema> {
+export async function readDB(forceFresh = false): Promise<DatabaseSchema> {
   const now = Date.now()
-  if (globalThis._dtDbCache && now - globalThis._dtDbCache.timestamp < CACHE_TTL_MS) {
+  if (!forceFresh && globalThis._dtDbCache && now - globalThis._dtDbCache.timestamp < CACHE_TTL_MS) {
     return globalThis._dtDbCache.data
   }
 
@@ -299,7 +299,7 @@ export async function readDB(): Promise<DatabaseSchema> {
   return fallback
 }
 
-export async function writeDB(dbData: DatabaseSchema): Promise<void> {
+export async function writeDB(dbData: DatabaseSchema, changedCollections?: (keyof DatabaseSchema)[]): Promise<void> {
   // Update in-memory cache instantly so subsequent reads return fresh data immediately
   globalThis._dtDbCache = { data: dbData, timestamp: Date.now() }
 
@@ -310,7 +310,38 @@ export async function writeDB(dbData: DatabaseSchema): Promise<void> {
     const mongo = await connectToDatabase()
     if (mongo) {
       try {
-        await writeMongoCollections(mongo.db, dbData)
+        if (changedCollections && changedCollections.length > 0) {
+          const tasks: Promise<unknown>[] = []
+          if (changedCollections.includes('products')) tasks.push(syncCollection(mongo.db, 'products', dbData.products))
+          if (changedCollections.includes('leads')) tasks.push(syncCollection(mongo.db, 'leads', dbData.leads))
+          if (changedCollections.includes('customers')) tasks.push(syncCollection(mongo.db, 'customers', dbData.customers))
+          if (changedCollections.includes('orders')) tasks.push(syncCollection(mongo.db, 'orders', dbData.orders))
+          if (changedCollections.includes('order_items')) tasks.push(syncCollection(mongo.db, 'order_items', dbData.order_items))
+          if (changedCollections.includes('activities')) tasks.push(syncCollection(mongo.db, 'activities', dbData.activities))
+          if (changedCollections.includes('whatsapp_templates')) tasks.push(syncCollection(mongo.db, 'whatsapp_templates', dbData.whatsapp_templates))
+          if (changedCollections.includes('transactions')) tasks.push(syncCollection(mongo.db, 'transactions', dbData.transactions))
+          if (changedCollections.includes('settings')) {
+            tasks.push(
+              mongo.db.collection('settings').updateOne(
+                { id: 'global' },
+                { $set: { id: 'global', ...dbData.settings } },
+                { upsert: true }
+              )
+            )
+          }
+          if (changedCollections.includes('order_counter')) {
+            tasks.push(
+              mongo.db.collection('counters').updateOne(
+                { id: 'order_counter' },
+                { $set: { id: 'order_counter', count: dbData.order_counter || 0 } },
+                { upsert: true }
+              )
+            )
+          }
+          await Promise.all(tasks)
+        } else {
+          await writeMongoCollections(mongo.db, dbData)
+        }
       } catch (err) {
         console.error('Error writing to MongoDB:', err)
       }

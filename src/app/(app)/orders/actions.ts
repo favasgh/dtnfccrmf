@@ -27,8 +27,8 @@ function computeOrderTotals(order: Order, items: OrderItem[], products: Product[
   }
 }
 
-export async function getOrders(statusFilter?: string, search?: string): Promise<Order[]> {
-  const db = await readDB()
+export async function getOrders(statusFilter?: string, search?: string, forceFresh = false): Promise<Order[]> {
+  const db = await readDB(forceFresh)
   let list = db.orders.map((o) => {
     const enriched = computeOrderTotals(o, db.order_items, db.products)
     const cust = db.customers.find((c) => c.id === o.customer_id)

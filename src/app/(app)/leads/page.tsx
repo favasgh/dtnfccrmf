@@ -47,16 +47,19 @@ export default function LeadsPage() {
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{ imported: number; errors: string[] } | null>(null)
 
-  async function loadData(silent = false) {
+  async function loadData(silent = false, forceFresh = false) {
     if (!silent) setLoading(true)
     else setRefreshing(true)
     try {
       const [data, prods] = await Promise.all([
-        getLeads({
-          stage: stageFilter,
-          source: sourceFilter,
-          search,
-        }),
+        getLeads(
+          {
+            stage: stageFilter,
+            source: sourceFilter,
+            search,
+          },
+          forceFresh
+        ),
         getProducts(),
       ])
       setLeads(data)
@@ -72,11 +75,13 @@ export default function LeadsPage() {
     loadData()
   }, [stageFilter, sourceFilter])
 
-  // 2. Multi-device live auto-sync (polls every 6 seconds & syncs on tab focus)
+  // 2. Multi-device live auto-sync (polls every 45s when tab is visible & syncs on tab focus)
   useEffect(() => {
     const interval = setInterval(() => {
-      loadData(true)
-    }, 6000)
+      if (document.visibilityState === 'visible') {
+        loadData(true)
+      }
+    }, 45000)
 
     const handleFocus = () => loadData(true)
     window.addEventListener('focus', handleFocus)
@@ -209,10 +214,10 @@ export default function LeadsPage() {
             </div>
 
             <button
-              onClick={() => loadData(true)}
+              onClick={() => loadData(true, true)}
               disabled={refreshing}
               className="px-2.5 py-2 bg-card border border-border text-xs rounded-lg hover:bg-card-hover text-muted hover:text-foreground flex items-center gap-1"
-              title="Sync with cloud"
+              title="Sync fresh from cloud"
             >
               <span className={`inline-block text-xs ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
             </button>
