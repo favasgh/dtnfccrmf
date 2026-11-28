@@ -5,7 +5,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 pb-nav md:pb-0">
+      <main className="flex-1 pb-nav md:pb-0 overflow-x-hidden min-w-0">
         {children}
       </main>
       <BottomNav />

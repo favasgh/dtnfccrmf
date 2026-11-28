@@ -40,41 +40,41 @@ export default async function DashboardPage() {
   return (
     <>
       <Header title="Dashboard" />
-      <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+      <div className="p-3.5 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
         {/* Metric Cards (Grid) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {/* Active Orders */}
-          <Link href="/orders" className="p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors block">
-            <span className="text-xs text-muted font-medium block">Active Orders</span>
-            <span className="text-2xl font-bold text-lime font-mono block mt-1">
+          <Link href="/orders" className="p-2.5 sm:p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors block text-center sm:text-left">
+            <span className="text-[10px] sm:text-xs text-muted font-medium block truncate">Active Orders</span>
+            <span className="text-lg sm:text-2xl font-bold text-lime font-mono block mt-0.5 sm:mt-1">
               {orders.filter((o) => o.status !== 'Cancelled' && o.status !== 'Closed').length}
             </span>
-            <span className="text-[10px] text-muted block mt-1">
-              {thisMonthOrders.length} order{thisMonthOrders.length === 1 ? '' : 's'} this month
+            <span className="text-[9px] sm:text-[10px] text-muted block mt-0.5 truncate">
+              {thisMonthOrders.length} this month
             </span>
           </Link>
 
           {/* Active Leads */}
-          <Link href="/leads" className="p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors block">
-            <span className="text-xs text-muted font-medium block">Active Leads</span>
-            <span className="text-2xl font-bold text-foreground font-mono block mt-1">
+          <Link href="/leads" className="p-2.5 sm:p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors block text-center sm:text-left">
+            <span className="text-[10px] sm:text-xs text-muted font-medium block truncate">Active Leads</span>
+            <span className="text-lg sm:text-2xl font-bold text-foreground font-mono block mt-0.5 sm:mt-1">
               {activeLeads.length}
             </span>
-            <span className="text-[10px] text-muted block mt-1">
+            <span className="text-[9px] sm:text-[10px] text-muted block mt-0.5 truncate">
               In sales pipeline
             </span>
           </Link>
 
           {/* Follow-ups Due */}
-          <div className="p-4 bg-card border border-border rounded-xl block">
-            <span className="text-xs text-muted font-medium block">Follow-ups Due</span>
+          <div className="p-2.5 sm:p-4 bg-card border border-border rounded-xl block text-center sm:text-left">
+            <span className="text-[10px] sm:text-xs text-muted font-medium block truncate">Follow-ups Due</span>
             <span
-              className={`text-2xl font-bold font-mono block mt-1 ${followUpsDue.length > 0 ? 'text-warning' : 'text-foreground'}`}
+              className={`text-lg sm:text-2xl font-bold font-mono block mt-0.5 sm:mt-1 ${followUpsDue.length > 0 ? 'text-warning' : 'text-foreground'}`}
             >
               {followUpsDue.length}
             </span>
-            <span className="text-[10px] text-muted block mt-1">
-              {followUpsDue.length === 0 ? 'All caught up 🎉' : 'Due today or overdue'}
+            <span className="text-[9px] sm:text-[10px] text-muted block mt-0.5 truncate">
+              {followUpsDue.length === 0 ? 'All caught up 🎉' : 'Due today'}
             </span>
           </div>
         </div>
@@ -106,18 +106,18 @@ export default async function DashboardPage() {
                 return (
                   <div
                     key={lead.id}
-                    className="p-3 bg-black/60 border border-border rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                    className="p-3 bg-black/60 border border-border rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs"
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <Link href={`/leads/${lead.id}`} className="font-semibold text-foreground hover:underline">
+                        <Link href={`/leads/${lead.id}`} className="font-semibold text-foreground hover:underline truncate">
                           {lead.name}
                         </Link>
                         {lead.business_name && (
-                          <span className="text-muted text-[11px]">({lead.business_name})</span>
+                          <span className="text-muted text-[11px] truncate max-w-[150px]">({lead.business_name})</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         <span
                           className={`font-semibold text-[10px] ${overdue ? 'text-danger' : today ? 'text-warning' : 'text-muted'
                             }`}
@@ -129,20 +129,20 @@ export default async function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-auto">
                       {lead.phone && (
                         <a
                           href={waLink(lead.phone, `Hi ${lead.name}, this is Muhammed from Double Tap.`)}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-2.5 py-1 bg-[#25D366] text-black font-semibold rounded text-[11px] hover:bg-[#20ba5a]"
+                          className="flex-1 sm:flex-none px-3 py-1.5 bg-[#25D366] text-black font-semibold rounded-lg text-xs hover:bg-[#20ba5a] text-center"
                         >
                           💬 WhatsApp
                         </a>
                       )}
                       <Link
                         href={`/leads/${lead.id}`}
-                        className="px-2.5 py-1 bg-card border border-border text-foreground rounded text-[11px] hover:bg-card-hover"
+                        className="px-3 py-1.5 bg-card border border-border text-foreground font-semibold rounded-lg text-xs hover:bg-card-hover text-center"
                       >
                         View
                       </Link>
@@ -173,19 +173,19 @@ export default async function DashboardPage() {
                   <Link
                     key={o.id}
                     href={`/orders/${o.id}`}
-                    className="p-3 bg-black/60 border border-border rounded-lg flex justify-between items-center hover:border-lime/40 text-xs block"
+                    className="p-3 bg-black/60 border border-border rounded-lg flex items-center justify-between gap-2 hover:border-lime/40 text-xs transition-colors"
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-foreground">{o.order_no}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-card border border-border text-muted">
+                        <span className="font-mono font-bold text-foreground shrink-0">{o.order_no}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-card border border-border text-muted truncate">
                           {o.status}
                         </span>
                       </div>
-                      <span className="text-muted block text-xs mt-0.5">{o.customer?.name}</span>
+                      <span className="text-muted block text-xs mt-0.5 truncate">{o.customer?.name}</span>
                       <span className="block text-[10px] text-muted mt-0.5">{formatDate(o.order_date)}</span>
                     </div>
-                    <span className="text-muted hover:text-lime text-[11px] font-semibold flex items-center gap-1 transition-colors">
+                    <span className="text-muted hover:text-lime text-[11px] font-semibold flex items-center gap-0.5 shrink-0 transition-colors">
                       View →
                     </span>
                   </Link>
