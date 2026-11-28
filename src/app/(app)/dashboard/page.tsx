@@ -45,9 +45,9 @@ export default async function DashboardPage() {
     }
   })
 
-  const ordersAwaitingAdvance = orders.filter((o) => o.status === 'Awaiting Advance')
   const unpaidOrders = orders.filter((o) => o.status !== 'Cancelled' && o.status !== 'Closed' && (o.balance_due || 0) > 0)
   const totalUnpaidBalances = unpaidOrders.reduce((sum, o) => sum + (o.balance_due || 0), 0)
+  const recentOrders = orders.filter((o) => o.status !== 'Cancelled').slice(0, 5)
 
   const now = new Date()
   const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
       <Header title="Dashboard" />
       <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
         {/* Metric Cards (Grid) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Month Sales */}
           <div className="p-4 bg-card border border-border rounded-xl">
             <span className="text-xs text-muted font-medium block">This Month Sales</span>
@@ -97,18 +97,6 @@ export default async function DashboardPage() {
             <span className="text-[10px] text-muted block mt-1">
               {unpaidOrders.length} order{unpaidOrders.length === 1 ? '' : 's'} pending
             </span>
-          </div>
-
-          {/* Awaiting Advance */}
-          <div className="p-4 bg-card border border-border rounded-xl">
-            <span className="text-xs text-muted font-medium block">Awaiting Advance</span>
-            <span
-              className={`text-2xl font-bold font-mono block mt-1 ${ordersAwaitingAdvance.length > 0 ? 'text-warning' : 'text-foreground'
-                }`}
-            >
-              {ordersAwaitingAdvance.length}
-            </span>
-            <span className="text-[10px] text-muted block mt-1">Orders waiting to start</span>
           </div>
         </div>
 
@@ -187,33 +175,38 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Two Columns: Orders Awaiting Advance & Leads Pipeline */}
+        {/* Two Columns: Recent Orders & Leads Pipeline */}
         <div className="grid md:grid-cols-2 gap-4">
-          {/* Orders Awaiting Advance */}
+          {/* Recent Orders */}
           <div className="bg-card border border-border rounded-xl p-4 md:p-5 space-y-3">
             <div className="flex justify-between items-center">
-              <h2 className="text-sm font-bold text-foreground">Orders Awaiting Advance</h2>
+              <h2 className="text-sm font-bold text-foreground">Recent Orders</h2>
               <Link href="/orders" className="text-xs text-lime hover:underline">
-                View orders →
+                View all orders →
               </Link>
             </div>
 
-            {ordersAwaitingAdvance.length === 0 ? (
-              <p className="text-xs text-muted py-6 text-center">No orders awaiting advance</p>
+            {recentOrders.length === 0 ? (
+              <p className="text-xs text-muted py-6 text-center">No orders yet</p>
             ) : (
               <div className="space-y-2">
-                {ordersAwaitingAdvance.map((o) => (
+                {recentOrders.map((o) => (
                   <Link
                     key={o.id}
                     href={`/orders/${o.id}`}
                     className="p-3 bg-black/60 border border-border rounded-lg flex justify-between items-center hover:border-lime/40 text-xs block"
                   >
                     <div>
-                      <span className="font-mono font-bold text-foreground mr-2">{o.order_no}</span>
-                      <span className="text-muted">{o.customer?.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-foreground">{o.order_no}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-card border border-border text-muted">
+                          {o.status}
+                        </span>
+                      </div>
+                      <span className="text-muted block text-xs mt-0.5">{o.customer?.name}</span>
                       <span className="block text-[10px] text-muted mt-0.5">{formatDate(o.order_date)}</span>
                     </div>
-                    <span className="font-bold text-warning font-mono">
+                    <span className="font-bold text-lime font-mono">
                       {formatINR(o.total_amount || 0)}
                     </span>
                   </Link>
