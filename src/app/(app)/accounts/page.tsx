@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import { Transaction, TransactionType, ExpenseCategory, EXPENSE_CATEGORIES } from '@/lib/types'
@@ -224,7 +224,9 @@ export default function AccountsPage() {
 
   // Filter Sales Orders by search query, status, and bank vs cash
   const filteredSales = summary.salesOrders.filter((s) => {
-    if (salesStatusFilter !== 'ALL' && s.status !== salesStatusFilter) {
+    if (salesStatusFilter === 'pending_balance') {
+      if ((s.balance_due || 0) <= 0) return false
+    } else if (salesStatusFilter !== 'ALL' && s.status !== salesStatusFilter) {
       return false
     }
     if (paymentMethodFilter !== 'ALL') {
@@ -242,6 +244,47 @@ export default function AccountsPage() {
     )
   })
 
+  const ledgerRef = useRef<HTMLDivElement>(null)
+
+  function scrollToLedger() {
+    setTimeout(() => {
+      ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }
+
+  function handleSelectSalesCard() {
+    setMainTab('sales')
+    setSalesStatusFilter('ALL')
+    scrollToLedger()
+  }
+
+  function handleSelectExpensesCard() {
+    setMainTab('transactions')
+    setTypeFilter('expense')
+    setCategoryFilter('ALL')
+    scrollToLedger()
+  }
+
+  function handleSelectInflowCard() {
+    setMainTab('transactions')
+    setTypeFilter('income')
+    setCategoryFilter('ALL')
+    scrollToLedger()
+  }
+
+  function handleSelectPendingDueCard() {
+    setMainTab('sales')
+    setSalesStatusFilter('pending_balance')
+    scrollToLedger()
+  }
+
+  function handleSelectCategory(cat: string) {
+    setMainTab('transactions')
+    setTypeFilter('expense')
+    setCategoryFilter(cat)
+    scrollToLedger()
+  }
+
   return (
     <>
       <Header title="Accounts & Sales" />
@@ -249,8 +292,18 @@ export default function AccountsPage() {
         {/* Metric Cards - Overview */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Total Sales */}
-          <div className="p-4 bg-card border border-border hover:border-lime/40 rounded-xl transition-colors">
-            <span className="text-xs text-lime font-bold uppercase tracking-wider block">Total Sales</span>
+          <div
+            onClick={handleSelectSalesCard}
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+              mainTab === 'sales' && salesStatusFilter === 'ALL'
+                ? 'bg-lime/10 border-lime ring-1 ring-lime/40 shadow-sm'
+                : 'bg-card border-border hover:border-lime/40'
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-lime font-bold uppercase tracking-wider block">Total Sales</span>
+              <span className="text-[10px] text-lime font-semibold">View Sales →</span>
+            </div>
             <span className="text-2xl font-black text-lime font-mono block mt-1">
               {formatINR(summary.totalSales)}
             </span>
@@ -260,8 +313,18 @@ export default function AccountsPage() {
           </div>
 
           {/* Total Cash Inflow */}
-          <div className="p-4 bg-card border border-border rounded-xl">
-            <span className="text-xs text-muted font-medium block">Cash Collected</span>
+          <div
+            onClick={handleSelectInflowCard}
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+              mainTab === 'transactions' && typeFilter === 'income'
+                ? 'bg-emerald-950/30 border-emerald-400 ring-1 ring-emerald-400/40 shadow-sm'
+                : 'bg-card border-border hover:border-emerald-500/40'
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-emerald-400 font-medium block">Cash Inflow</span>
+              <span className="text-[10px] text-emerald-400 font-semibold">View Inflow →</span>
+            </div>
             <span className="text-2xl font-bold text-foreground font-mono block mt-1">
               {formatINR(summary.totalInflow)}
             </span>
@@ -271,8 +334,18 @@ export default function AccountsPage() {
           </div>
 
           {/* Total Expenses */}
-          <div className="p-4 bg-card border border-border rounded-xl">
-            <span className="text-xs text-muted font-medium block">Total Expenses</span>
+          <div
+            onClick={handleSelectExpensesCard}
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+              mainTab === 'transactions' && typeFilter === 'expense'
+                ? 'bg-red-950/30 border-danger ring-1 ring-danger/40 shadow-sm'
+                : 'bg-card border-border hover:border-danger/40'
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-danger font-medium block">Total Expenses</span>
+              <span className="text-[10px] text-danger font-semibold">View Expenses →</span>
+            </div>
             <span className="text-2xl font-bold text-danger font-mono block mt-1">
               {formatINR(summary.totalExpenses)}
             </span>
@@ -280,10 +353,21 @@ export default function AccountsPage() {
           </div>
 
           {/* Net Cash Balance */}
-          <div className="p-4 bg-black border border-lime/30 rounded-xl">
-            <span className="text-xs text-lime font-medium flex items-center gap-1">
-              <span>💳</span> Net Cash Balance
-            </span>
+          <div
+            onClick={() => {
+              setPaymentMethodFilter('ALL')
+              setTypeFilter('ALL')
+              setMainTab('transactions')
+              scrollToLedger()
+            }}
+            className="p-4 bg-black border border-lime/30 hover:border-lime rounded-xl transition-all cursor-pointer"
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-lime font-medium flex items-center gap-1">
+                <span>💳</span> Net Cash
+              </span>
+              <span className="text-[10px] text-lime font-semibold">Ledger →</span>
+            </div>
             <span
               className={`text-2xl font-bold font-mono block mt-1 ${summary.netCashFlow >= 0 ? 'text-lime' : 'text-danger'
                 }`}
@@ -294,8 +378,18 @@ export default function AccountsPage() {
           </div>
 
           {/* Pending Receivables */}
-          <div className="p-4 bg-card border border-border rounded-xl col-span-2 lg:col-span-1">
-            <span className="text-xs text-muted font-medium block">Pending Due</span>
+          <div
+            onClick={handleSelectPendingDueCard}
+            className={`p-4 rounded-xl border transition-all cursor-pointer col-span-2 lg:col-span-1 ${
+              mainTab === 'sales' && salesStatusFilter === 'pending_balance'
+                ? 'bg-amber-950/30 border-warning ring-1 ring-warning/40 shadow-sm'
+                : 'bg-card border-border hover:border-warning/40'
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-warning font-medium block">Pending Due</span>
+              <span className="text-[10px] text-warning font-semibold">View Due →</span>
+            </div>
             <span className="text-2xl font-bold text-warning font-mono block mt-1">
               {formatINR(summary.pendingReceivables)}
             </span>
@@ -307,7 +401,11 @@ export default function AccountsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Bank Account Option Card */}
           <div
-            onClick={() => setPaymentMethodFilter(paymentMethodFilter === 'bank' ? 'ALL' : 'bank')}
+            onClick={() => {
+              const next = paymentMethodFilter === 'bank' ? 'ALL' : 'bank'
+              setPaymentMethodFilter(next)
+              scrollToLedger()
+            }}
             className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethodFilter === 'bank'
               ? 'bg-blue-950/30 border-blue-400 ring-1 ring-blue-400'
               : 'bg-card border-border hover:border-blue-500/40'
@@ -333,7 +431,11 @@ export default function AccountsPage() {
 
           {/* Cash in Hand Option Card */}
           <div
-            onClick={() => setPaymentMethodFilter(paymentMethodFilter === 'cash' ? 'ALL' : 'cash')}
+            onClick={() => {
+              const next = paymentMethodFilter === 'cash' ? 'ALL' : 'cash'
+              setPaymentMethodFilter(next)
+              scrollToLedger()
+            }}
             className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethodFilter === 'cash'
               ? 'bg-amber-950/30 border-amber-400 ring-1 ring-amber-400'
               : 'bg-card border-border hover:border-amber-500/40'
@@ -362,12 +464,23 @@ export default function AccountsPage() {
         {Object.keys(summary.categoryBreakdown).length > 0 && (
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
             <h3 className="text-xs font-semibold text-lime uppercase tracking-wider">
-              Expense Breakdown by Category
+              Expense Breakdown by Category (Click to filter)
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {Object.entries(summary.categoryBreakdown).map(([cat, amount]) => (
-                <div key={cat} className="p-2.5 bg-black/50 border border-border/50 rounded-lg">
-                  <span className="text-muted block text-[11px] truncate">{getCategoryLabel(cat)}</span>
+                <div
+                  key={cat}
+                  onClick={() => handleSelectCategory(cat)}
+                  className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                    mainTab === 'transactions' && categoryFilter === cat
+                      ? 'bg-lime/20 border-lime ring-1 ring-lime/40'
+                      : 'bg-black/50 border-border/50 hover:border-lime/40'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted block text-[11px] truncate">{getCategoryLabel(cat)}</span>
+                    <span className="text-[9px] text-lime font-semibold">Filter →</span>
+                  </div>
                   <span className="font-bold text-foreground font-mono block mt-0.5">
                     {formatINR(amount)}
                   </span>
@@ -378,7 +491,7 @@ export default function AccountsPage() {
         )}
 
         {/* Main Section Navigation: Sales vs Transactions */}
-        <div className="flex bg-card border border-border rounded-xl p-1 gap-1">
+        <div ref={ledgerRef} className="flex bg-card border border-border rounded-xl p-1 gap-1 scroll-mt-20">
           <button
             onClick={() => setMainTab('sales')}
             className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${mainTab === 'sales' ? 'bg-lime text-black shadow' : 'text-muted hover:text-foreground'
@@ -492,16 +605,24 @@ export default function AccountsPage() {
               </h2>
 
               <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs">
-                {['ALL', 'Awaiting Advance', 'In Progress', 'Ready', 'Delivered', 'Closed'].map((st) => (
+                {[
+                  { id: 'ALL', label: 'All Statuses' },
+                  { id: 'pending_balance', label: '⚠️ Pending Due' },
+                  { id: 'Awaiting Advance', label: 'Awaiting Advance' },
+                  { id: 'In Progress', label: 'In Progress' },
+                  { id: 'Ready', label: 'Ready' },
+                  { id: 'Delivered', label: 'Delivered' },
+                  { id: 'Closed', label: 'Closed' },
+                ].map((st) => (
                   <button
-                    key={st}
-                    onClick={() => setSalesStatusFilter(st)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${salesStatusFilter === st
+                    key={st.id}
+                    onClick={() => setSalesStatusFilter(st.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${salesStatusFilter === st.id
                       ? 'bg-lime text-black font-semibold'
                       : 'bg-black/60 border border-border text-muted hover:text-foreground'
                       }`}
                   >
-                    {st === 'ALL' ? 'All Statuses' : st}
+                    {st.label}
                   </button>
                 ))}
               </div>
