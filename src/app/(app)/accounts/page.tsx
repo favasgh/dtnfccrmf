@@ -294,11 +294,10 @@ export default function AccountsPage() {
           {/* Total Sales */}
           <div
             onClick={handleSelectSalesCard}
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              mainTab === 'sales' && salesStatusFilter === 'ALL'
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${mainTab === 'sales' && salesStatusFilter === 'ALL'
                 ? 'bg-lime/10 border-lime ring-1 ring-lime/40 shadow-sm'
                 : 'bg-card border-border hover:border-lime/40'
-            }`}
+              }`}
           >
             <div className="flex justify-between items-center">
               <span className="text-xs text-lime font-bold uppercase tracking-wider block">Total Sales</span>
@@ -315,11 +314,10 @@ export default function AccountsPage() {
           {/* Total Cash Inflow */}
           <div
             onClick={handleSelectInflowCard}
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              mainTab === 'transactions' && typeFilter === 'income'
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${mainTab === 'transactions' && typeFilter === 'income'
                 ? 'bg-emerald-950/30 border-emerald-400 ring-1 ring-emerald-400/40 shadow-sm'
                 : 'bg-card border-border hover:border-emerald-500/40'
-            }`}
+              }`}
           >
             <div className="flex justify-between items-center">
               <span className="text-xs text-emerald-400 font-medium block">Cash Inflow</span>
@@ -336,11 +334,10 @@ export default function AccountsPage() {
           {/* Total Expenses */}
           <div
             onClick={handleSelectExpensesCard}
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              mainTab === 'transactions' && typeFilter === 'expense'
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${mainTab === 'transactions' && typeFilter === 'expense'
                 ? 'bg-red-950/30 border-danger ring-1 ring-danger/40 shadow-sm'
                 : 'bg-card border-border hover:border-danger/40'
-            }`}
+              }`}
           >
             <div className="flex justify-between items-center">
               <span className="text-xs text-danger font-medium block">Total Expenses</span>
@@ -380,11 +377,10 @@ export default function AccountsPage() {
           {/* Pending Receivables */}
           <div
             onClick={handleSelectPendingDueCard}
-            className={`p-4 rounded-xl border transition-all cursor-pointer col-span-2 lg:col-span-1 ${
-              mainTab === 'sales' && salesStatusFilter === 'pending_balance'
+            className={`p-4 rounded-xl border transition-all cursor-pointer col-span-2 lg:col-span-1 ${mainTab === 'sales' && salesStatusFilter === 'pending_balance'
                 ? 'bg-amber-950/30 border-warning ring-1 ring-warning/40 shadow-sm'
                 : 'bg-card border-border hover:border-warning/40'
-            }`}
+              }`}
           >
             <div className="flex justify-between items-center">
               <span className="text-xs text-warning font-medium block">Pending Due</span>
@@ -471,11 +467,10 @@ export default function AccountsPage() {
                 <div
                   key={cat}
                   onClick={() => handleSelectCategory(cat)}
-                  className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
-                    mainTab === 'transactions' && categoryFilter === cat
+                  className={`p-2.5 rounded-lg border transition-all cursor-pointer ${mainTab === 'transactions' && categoryFilter === cat
                       ? 'bg-lime/20 border-lime ring-1 ring-lime/40'
                       : 'bg-black/50 border-border/50 hover:border-lime/40'
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-center">
                     <span className="text-muted block text-[11px] truncate">{getCategoryLabel(cat)}</span>
