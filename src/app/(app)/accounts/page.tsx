@@ -309,8 +309,8 @@ export default function AccountsPage() {
           <div
             onClick={() => setPaymentMethodFilter(paymentMethodFilter === 'bank' ? 'ALL' : 'bank')}
             className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethodFilter === 'bank'
-                ? 'bg-blue-950/30 border-blue-400 ring-1 ring-blue-400'
-                : 'bg-card border-border hover:border-blue-500/40'
+              ? 'bg-blue-950/30 border-blue-400 ring-1 ring-blue-400'
+              : 'bg-card border-border hover:border-blue-500/40'
               }`}
           >
             <div className="flex justify-between items-center">
@@ -335,8 +335,8 @@ export default function AccountsPage() {
           <div
             onClick={() => setPaymentMethodFilter(paymentMethodFilter === 'cash' ? 'ALL' : 'cash')}
             className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethodFilter === 'cash'
-                ? 'bg-amber-950/30 border-amber-400 ring-1 ring-amber-400'
-                : 'bg-card border-border hover:border-amber-500/40'
+              ? 'bg-amber-950/30 border-amber-400 ring-1 ring-amber-400'
+              : 'bg-card border-border hover:border-amber-500/40'
               }`}
           >
             <div className="flex justify-between items-center">
@@ -456,8 +456,8 @@ export default function AccountsPage() {
             <button
               onClick={() => setPaymentMethodFilter('ALL')}
               className={`px-3 py-1 rounded-lg font-medium transition-colors ${paymentMethodFilter === 'ALL'
-                  ? 'bg-lime text-black font-semibold'
-                  : 'bg-card border border-border text-muted hover:text-foreground'
+                ? 'bg-lime text-black font-semibold'
+                : 'bg-card border border-border text-muted hover:text-foreground'
                 }`}
             >
               All Accounts
@@ -465,8 +465,8 @@ export default function AccountsPage() {
             <button
               onClick={() => setPaymentMethodFilter('bank')}
               className={`px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors ${paymentMethodFilter === 'bank'
-                  ? 'bg-blue-600 text-white font-semibold'
-                  : 'bg-card border border-border text-blue-300 hover:text-foreground'
+                ? 'bg-blue-600 text-white font-semibold'
+                : 'bg-card border border-border text-blue-300 hover:text-foreground'
                 }`}
             >
               <span>🏛️</span> Bank / UPI
@@ -474,8 +474,8 @@ export default function AccountsPage() {
             <button
               onClick={() => setPaymentMethodFilter('cash')}
               className={`px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors ${paymentMethodFilter === 'cash'
-                  ? 'bg-amber-600 text-white font-semibold'
-                  : 'bg-card border border-border text-amber-300 hover:text-foreground'
+                ? 'bg-amber-600 text-white font-semibold'
+                : 'bg-card border border-border text-amber-300 hover:text-foreground'
                 }`}
             >
               <span>💵</span> Cash in Hand
@@ -497,8 +497,8 @@ export default function AccountsPage() {
                     key={st}
                     onClick={() => setSalesStatusFilter(st)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${salesStatusFilter === st
-                        ? 'bg-lime text-black font-semibold'
-                        : 'bg-black/60 border border-border text-muted hover:text-foreground'
+                      ? 'bg-lime text-black font-semibold'
+                      : 'bg-black/60 border border-border text-muted hover:text-foreground'
                       }`}
                   >
                     {st === 'ALL' ? 'All Statuses' : st}
@@ -799,8 +799,8 @@ export default function AccountsPage() {
                       type="button"
                       onClick={() => setFormMethod('bank')}
                       className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${formMethod === 'bank' || formMethod === 'upi'
-                          ? 'bg-blue-950/60 border-blue-400 text-blue-300 ring-1 ring-blue-400'
-                          : 'bg-black border-border text-muted hover:text-foreground'
+                        ? 'bg-blue-950/60 border-blue-400 text-blue-300 ring-1 ring-blue-400'
+                        : 'bg-black border-border text-muted hover:text-foreground'
                         }`}
                     >
                       <span>🏛️</span> Bank / UPI
@@ -809,8 +809,8 @@ export default function AccountsPage() {
                       type="button"
                       onClick={() => setFormMethod('cash')}
                       className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${formMethod === 'cash'
-                          ? 'bg-amber-950/60 border-amber-400 text-amber-300 ring-1 ring-amber-400'
-                          : 'bg-black border-border text-muted hover:text-foreground'
+                        ? 'bg-amber-950/60 border-amber-400 text-amber-300 ring-1 ring-amber-400'
+                        : 'bg-black border-border text-muted hover:text-foreground'
                         }`}
                     >
                       <span>💵</span> Cash in Hand
