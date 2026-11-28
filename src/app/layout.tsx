@@ -12,6 +12,14 @@ const titillium = Titillium_Web({
 export const metadata: Metadata = {
   title: "Double Tap CRM",
   description: "CRM for Double Tap NFC Smart Cards — Create. Code. Connect.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/doubletap-logo.png" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/doubletap-logo.png",
+  },
 }
 
 export const viewport: Viewport = {

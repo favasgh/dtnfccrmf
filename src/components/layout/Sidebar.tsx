@@ -20,11 +20,16 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-screen">
       {/* Brand */}
-      <div className="p-5 border-b border-border">
-        <h1 className="text-xl font-bold">
-          <span className="text-lime">Double</span> Tap
-        </h1>
-        <p className="text-xs text-muted mt-0.5">Create. Code. Connect.</p>
+      <div className="p-5 border-b border-border flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-black border border-lime flex items-center justify-center font-black text-sm text-lime shadow-sm shrink-0">
+          dt
+        </div>
+        <div>
+          <h1 className="text-xl font-bold leading-none">
+            <span className="text-lime">Double</span> Tap
+          </h1>
+          <p className="text-xs text-muted mt-1">Create. Code. Connect.</p>
+        </div>
       </div>
 
       {/* Nav links */}
